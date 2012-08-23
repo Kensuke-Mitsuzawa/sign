@@ -125,9 +125,7 @@ dic_list = d.values()
 
 for tmp in range(len(dic_list)):
     list = []
-    name = "info_list_" + str(tmp) 
-    print name
-    list = name
+    
     
 
 #ここからルールを書いていく。
