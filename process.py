@@ -123,98 +123,87 @@ for line in cf:
 
 dic_list = d.values()
 
-#for tmp in range(len(dic_list)):
-#    list = []
-    
+# info_list_は二次元配列で定義する。なので[][]の１つめの[]が、何番目形態素か？２つめの[]が、その形態素の中身
+info_list_ = []
+for tmp in range(len(dic_list)):
+    info_list_.append(dic_list[tmp])
     
 
 #ここからルールを書いていく。
-info_list_1 = dic_list[0]
-info_list_2 = dic_list[1]
-info_list_3 = dic_list[2]
-info_list_4 = dic_list[3]
-info_list_5 = dic_list[4]
-
-#print info_list_1[9],info_list_1[10]
-#print info_list_2[9],info_list_2[10]
-#print info_list_3[9],info_list_3[10]
-#print info_list_4[9],info_list_4[10]
-#print info_list_5[9],info_list_5[10]
-
 # ルールガイド
 # リストの順番は [0]は*,[1]は形態素区切り番号,[2]は係り受け情報,[3]は不明,[4]は不明,[5]はかかり元*か被かかり-か,[6]はかかり文番号,[7]いつも"D",[8]は空き"|",[9]は語,[10]は品詞,[11]は品詞（詳しく）,[12]は機能,[13]は機能(詳しく),[14]は何型動詞か,[15]は動詞が何形か,[16]は語の原形,[17]は仮名,[18]は活用の仮名表示とスペースのあとに不明なタグ（[18]は使わない方がいい)
 
 #<名前>と申します。　
-if info_list_1[10] == u"名詞" and info_list_1[11] ==u"固有名詞" and info_list_1[12] == u"人名" and info_list_1[13] == u"姓":
+if info_list_[0][10] == u"名詞" and info_list_[0][11] ==u"固有名詞" and info_list_[0][12] == u"人名" and info_list_[0][13] == u"姓":
     
-    if info_list_2[10] == u"助詞" and info_list_2[11] == u"格助詞" and info_list_2[12] == u"引用":
+    if info_list_[1][10] == u"助詞" and info_list_[1][11] == u"格助詞" and info_list_[1][12] == u"引用":
 
-        if info_list_3[10] == u"動詞" and info_list_3[11] == u"自立":
+        if info_list_[2][10] == u"動詞" and info_list_[2][11] == u"自立":
 
-            print u"{<t> pt(1) 名前} %s。" % info_list_1[9]
+            print u"{<t> pt(1) 名前} %s。" % info_list_[0][9]
 
 #あなたのお名前はなんとおっしゃいますか？
 # ここらへん、dep情報も活用したいのだが、リストの自動作成がまだできてないので、実現してない.
 # ホントなら、〜にかかってたらというif文もつくりたいのだが
-if info_list_1[10] == u"名詞" and info_list_1[11] == u"代名詞" and info_list_1[12] == u"一般":
+if info_list_[0][10] == u"名詞" and info_list_[0][11] == u"代名詞" and info_list_[0][12] == u"一般":
 
-    if info_list_2[10] == u"助詞" and info_list_2[11] == u"連体詞":
+    if info_list_[1][10] == u"助詞" and info_list_[1][11] == u"連体詞":
 
-        if info_list_3[10] == u"接頭辞" and info_list_3[11] == u"名詞接続":
+        if info_list_[2][10] == u"接頭辞" and info_list_[2][11] == u"名詞接続":
 
-            if info_list_4[10] == u"名詞" and info_list_5[11] == u"一般":
+            if info_list_[3][10] == u"名詞" and info_list_[3][11] == u"一般":
 
-                if info_list_5[10] == u"助詞" and info_list_5[11] == u"係助詞":
+                if info_list_[4][10] == u"助詞" and info_list_[4][11] == u"係助詞":
 
-                    if info_list_6[10] == u"副詞" :
+                    if info_list_[5][10] == u"副詞" :
 
-                        if info_list_7[10] == u"動詞" and info_list_7[11] == u"自立":
+                        if info_list_[6][10] == u"動詞" and info_list_[6][11] == u"自立":
 
-                            if info_list_8[10] == u"助動詞":
+                            if info_list_[7][10] == u"助動詞":
 
-                                if info_list_10[10] == u"記号,一般":
+                                if info_list_[9][10] == u"記号,一般":
 
                                     print "{<t> pt(2) 名前}{<whq> 何?}"
 
 
 #あなたの手話の先生はだれですか？
 
-if info_list_1[10] == u"名詞" and info_list_1[11] == u"代名詞" and info_list_1[12] == u"一般":
+if info_list_[0][10] == u"名詞" and info_list_[0][11] == u"代名詞" and info_list_[0][12] == u"一般":
 
-    if info_list_2[9] == u"の":
+    if info_list_[1][9] == u"の":
 
-        if info_list_3[9] == u"手話":
+        if info_list_[2][9] == u"手話":
 
-            if info_list_4[9] == u"の":
+            if info_list_[3][9] == u"の":
 
-                if info_list_5[9] == u"先生":
+                if info_list_[4][9] == u"先生":
 
-                    if info_list_6[9] == u"は":
+                    if info_list_[5][9] == u"は":
 
-                        if info_list_7[9] == u"だれ":
+                        if info_list_[6][9] == u"だれ":
 
-                            if info_list_8[9] == u"です":
+                            if info_list_[7][9] == u"です":
 
-                                if info_list_8[9] == u"か":
+                                if info_list_[8][9] == u"か":
 
-                                    print "{<t> %s 手話　先生}{<whq> 誰　pt(3)?}" % info_list_1[9]
+                                    print "{<t> %s 手話　先生}{<whq> 誰　pt(3)?}" % info_list_[0][9]
 
                                 
     
     
 #あなたは佐藤さんですか？
 
-if info_list_1[9] == "あなた" and info_list_1[10] == u"名詞" and info_list_1[11] == u"固有名詞" and info_list_1[12] == u"一般":
+if info_list_[0][9] == u"あなた" and info_list_[0][10] == u"名詞" and info_list_[0][11] == u"固有名詞" and info_list_[0][12] == u"一般":
 
-    if info_list_2[9] == u"は":
+    if info_list_[1][9] == u"は":
 
-        if info_list_3[10] == u"名詞" and info_list_3[11] == u"固有名詞" and info_list_3[12] == u"人名" and info_list_3[13] == u"姓":
+        if info_list_[2][10] == u"名詞" and info_list_[2][11] == u"固有名詞" and info_list_[2][12] == u"人名" and info_list_[2][13] == u"姓":
 
-            if info_list_4[9] == u"さん":
+            if info_list_[3][9] == u"さん":
 
-                if info_list_5[9] == u"です":
+                if info_list_[4][9] == u"です":
 
-                    if info_list_6[9] == u"か":
+                    if info_list_[5][9] == u"か":
 
-                        print "{<t> pt(2)} %s  pt(2)?" % info_list_3[9]
+                        print "{<t> pt(2)} %s  pt(2)?" % info_list_[2][9]
 
