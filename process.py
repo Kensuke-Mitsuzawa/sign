@@ -218,3 +218,98 @@ if info_list_[0][9] == u"あなた" and info_list_[0][10] == u"名詞" and info_
 
                         print u"{<t> pt(2)} %s  pt(2)?" % info_list_[2][9]
 
+#私が佐藤です。
+if info_list_[2][9] == u"私" and info_list_[2][10] == u"名詞":
+
+    if info_list_[3][10] == u"助詞" and info_list_[3][11] == u"格助詞" and info_list_[3][12] == u"一般":
+
+        if info_list_[4][10] == u"名詞" and info_list_[4][11] == u"固有名詞" and  info_list_[4][12] == u"人名" and info_list_[4][13] == u"姓":
+            
+            if [5][10] == u"助動詞":
+
+                if[6][10] == u"記号":
+
+                    print u"<q> {<t> pt(1)} %s pt(1)" % info_list_[4][9]
+
+
+#いいえ、私は田中です。
+
+if info_list_[0][9] == u"いいえ" and info_list_[0][10] == u"感動詞":
+
+    if info_list_[1][9] == u"私" and info_list_[1][10] == u"名詞":
+        
+        if info_list_[2][10] == u"助詞" and info_list_[2][11] == u"係助詞":
+
+            if info_list_[3][11] == u"固有名詞" and info_list_[3][12] == u"人名"and info_list_[3][13] == u"姓":
+
+                if info_list_[4][10] == u"助動詞":
+                    
+                    if info_list_[5][10] == u"記号":
+
+                        print u"<q> {<t> pt(1)} %s pt(1)" % info_list_[4][9]\
+
+#あなたは聴者ですか、それともろう者ですか。
+
+if info_list_[0][9] == u"あなた":
+    
+    if info_list_[1][10] == u"助詞" and info_list_[1][11] == u"係助詞":
+
+        if info_list_[2][10] == u"名詞":
+
+            if info_list_[3][10] == u"助動詞":
+
+                if info_list_[4][10] == u"助詞" and info_list_[4][11] == u"副助詞／並立助詞／終助詞":
+
+                    if info_list_[7][10] == u"名詞":
+
+                        if info_list_[8][10] == u"助動詞":
+                            
+                            if info_list_[9][11] == u"助詞" and info_list_[9][12] == u"副助詞／並立助詞／終助詞":
+
+                                if info_list_[10][10] == u"記号":
+                                    
+                                    print u"{<t> pt(2)} %s ? %s ? <whq>? pt(2)" % info_list_[2][9] , info_list_[7][9]
+
+#あの青い服の方はどなたですか？
+
+if info_list_[1][10] == u"形容詞" and info_list_[1][11] == u"自立":
+
+    if info_list_[2][10] == u"名詞" and info_list_[2][11] == u"一般":
+
+        if info_list_[3][10] == u"助詞" and info_list_[3][11] == u"連体化":
+
+            if info_list_[4][10] == u"名詞" and info_list_[4][11] == u"非自立" and info_list_[4][12] == u"一般":
+
+                if info_list_[5][10] == u"助詞" and info_list_[5][11] == u"係助詞":
+
+                    if info_list_[6][10] == u"名詞" and info_list_[6][11] == u"代名詞":
+
+                        if info_list_[7][10] == u"助動詞":
+
+                            if info_list_[8][10] == u"助詞" and info_list_[8][11] == u"副助詞／並立助詞／終助詞":
+
+                                if info_list_[9][10] == u"記号":
+
+                                    print "{<t> pt(3) 青い　服　着る pt(3)}{<whq> pt(3)?}"
+
+
+#ここから面倒になったので、手を抜く
+#彼は田中さんで、聴者です。
+
+if info_list_[0][9] == u"彼":
+    
+    if info_list_[1][9] == u"は":
+
+        if info_list_[2][9] == u"田中":
+
+            if info_list_[3][9] == u"さん":
+
+                if info_list_[4][9] == u"で":
+
+                    if info_list_[5][9] == u"、":
+
+                        if info_list_[6][9] == u"聴者":
+
+                            if info_list[7][9] == u"です。":
+
+                                print u"{<t> pt(3) <gaze:3> pt(3)} 聴者 pt(3)。"
