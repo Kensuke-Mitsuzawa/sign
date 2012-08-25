@@ -5,6 +5,8 @@
 import sys
 import codecs
 import re
+import subprocess
+import readline
 
 # 結局、使ってないけど一応残しておく
 class word_info:
@@ -23,7 +25,19 @@ class depen_part(word_info):
         word_info.__init__(self,*av)
         self.dep = dep
         self.word_num = word_num
-        
+
+#入力文　をうけとる。
+sentence = raw_input("文を入力してネ\n")
+
+#cabochaに入力文を渡す。
+#sentence = sentence.encode('utf_8')
+
+proc = subprocess.Popen(['cabocha', '-f1','--output=test.txt'],
+                        stdin=subprocess.PIPE,
+                        )
+proc.communicate(sentence)
+
+#        
 element=[]
 cabocha_file = codecs.open('test.txt','r','utf-8')
 #cf = cabocha_file.decode('utf-8')
@@ -38,7 +52,8 @@ dd ={}
 for line in cf:
     print "-------------------------"
 
-    if len(line) == 22:
+    print len(line)
+    if len(line) == 21 or len(line) == 20 :
         #char_listをリセットする
         char_list = []
         
@@ -75,15 +90,15 @@ for line in cf:
             #これで末尾に*,番号,D]か-,番号,D]のどちらかのリストができあがっているはず
 
 
-    if len(line) > 23:
+    if len(line) > 22:
         print line
         # ","で区切ってリストに追加する
         word_info_list = line.split(",")
 
-        #語情報の先頭は空白でつながったままなので、分解して「語」をtag_info_listの最後に、「品詞」をword_info_listの先頭に入れる。
+        #語情報の先頭はタブでつながったままなので、分解して「語」をtag_info_listの最後に、「品詞」をword_info_listの先頭に入れる。
         #だいぶ後だしじゃんけん的な処理なので、コードを書き換える時は要注意
         tmp = word_info_list[0]
-        tmp_splitted = tmp.split(" ")
+        tmp_splitted = tmp.split("\t")
         tag_info_list[-1] = tmp_splitted[0]
         word_info_list[0] = tmp_splitted[-1]
         
@@ -127,7 +142,6 @@ dic_list = d.values()
 info_list_ = []
 for tmp in range(len(dic_list)):
     info_list_.append(dic_list[tmp])
-    
 
 #ここからルールを書いていく。
 # ルールガイド
@@ -143,27 +157,24 @@ if info_list_[0][10] == u"名詞" and info_list_[0][11] ==u"固有名詞" and in
             print u"{<t> pt(1) 名前} %s。" % info_list_[0][9]
 
 #あなたのお名前はなんとおっしゃいますか？
-# ここらへん、dep情報も活用したいのだが、リストの自動作成がまだできてないので、実現してない.
 # ホントなら、〜にかかってたらというif文もつくりたいのだが
 if info_list_[0][10] == u"名詞" and info_list_[0][11] == u"代名詞" and info_list_[0][12] == u"一般":
-
-    if info_list_[1][10] == u"助詞" and info_list_[1][11] == u"連体詞":
-
-        if info_list_[2][10] == u"接頭辞" and info_list_[2][11] == u"名詞接続":
-
-            if info_list_[3][10] == u"名詞" and info_list_[3][11] == u"一般":
-
+    
+    if info_list_[1][10] == u"助詞" and info_list_[1][11] == u"連体化":
+            
+            if info_list_[3][10] == u"名詞" :#and info_list_[3][11] == u"一般":
+                
                 if info_list_[4][10] == u"助詞" and info_list_[4][11] == u"係助詞":
-
+                    
                     if info_list_[5][10] == u"副詞" :
-
+                        
                         if info_list_[6][10] == u"動詞" and info_list_[6][11] == u"自立":
-
+                            
                             if info_list_[7][10] == u"助動詞":
-
-                                if info_list_[9][10] == u"記号,一般":
-
-                                    print "{<t> pt(2) 名前}{<whq> 何?}"
+                                
+                                if info_list_[9][10] == u"記号":
+                                    
+                                    print u"{<t> pt(2) 名前}{<whq> 何?}"
 
 
 #あなたの手話の先生はだれですか？
@@ -186,14 +197,14 @@ if info_list_[0][10] == u"名詞" and info_list_[0][11] == u"代名詞" and info
 
                                 if info_list_[8][9] == u"か":
 
-                                    print "{<t> %s 手話　先生}{<whq> 誰　pt(3)?}" % info_list_[0][9]
+                                    print u"{<t> %s 手話　先生}{<whq> 誰　pt(3)?}" % info_list_[0][9]
 
                                 
     
     
 #あなたは佐藤さんですか？
 
-if info_list_[0][9] == u"あなた" and info_list_[0][10] == u"名詞" and info_list_[0][11] == u"固有名詞" and info_list_[0][12] == u"一般":
+if info_list_[0][9] == u"あなた" and info_list_[0][10] == u"名詞" and info_list_[0][11] == u"代名詞" and info_list_[0][12] == u"一般":
 
     if info_list_[1][9] == u"は":
 
@@ -205,5 +216,5 @@ if info_list_[0][9] == u"あなた" and info_list_[0][10] == u"名詞" and info_
 
                     if info_list_[5][9] == u"か":
 
-                        print "{<t> pt(2)} %s  pt(2)?" % info_list_[2][9]
+                        print u"{<t> pt(2)} %s  pt(2)?" % info_list_[2][9]
 
