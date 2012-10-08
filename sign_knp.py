@@ -25,6 +25,9 @@ def Syori(clause_list,clause_num,clause):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
     print "--------------------"
     
+    #構文読み取り用の変数
+    struc = ""
+
     #カウンターの設置
     counter = 0
     
@@ -49,6 +52,17 @@ def Syori(clause_list,clause_num,clause):
         for i in range(start_pos,end_pos + 1):
 
             sentence = clause_list[i]
+
+            #構文情報を拾う
+            #疑問文のとき
+            if not re.findall(r"<モダリティ-疑問>",sentence) == []:
+                struc = "interrogative"
+            
+            #否定文のとき
+            if not re.findall(r"<否定表現>",sentence) == []:
+                struc = "negative"
+
+            
             
             #かかりうけ情報
             if not re.findall(r"\dD|-\dD",sentence) == []:
@@ -75,21 +89,38 @@ def Syori(clause_list,clause_num,clause):
                 tmp_dic["case_ana"] = re.findall("<解析格:.*?>",sentence)
 
             #正規化表記 
-            if tmp_dic["reg"] == []:
-                tmp_dic["reg"] = re.findall(r"(<代表表記:.*?>)",sentence)
+            if not re.findall(r"\*.*D",sentence) == []:
+                if tmp_dic["reg"] == []:
+                    tmp_dic["reg"] = re.findall(r"(<正規化代表表記:.*?>)",sentence)
+
+                    #正規化代表表記から形態素を取り出す
+                    if not tmp_dic["reg"] == []:
+                        #このif文内だけで使うreg_exp_listの定義
+                        reg_exp_list = []
+                        reg_exp = "".join(tmp_dic["reg"])
+                        reg_exp = re.sub(r"<正規化代表表記:","",reg_exp) 
+                        reg_exp = re.sub(r">","",reg_exp)
                 
-                #正規化代表表記から形態素を取り出す
-                if not tmp_dic["reg"] == []:
-                    reg_exp = "".join(tmp_dic["reg"])
-                    reg_exp = re.sub(r"<代表表記:","",reg_exp) 
-                    reg_exp = re.sub(r">","",reg_exp)
-                
-                    reg_exp_list = reg_exp.split("/")
-                    #morp_1が漢字表記でmorp_2がひらがな表記
-                    morp_1 = reg_exp_list[0]
-                    morp_2 = reg_exp_list[1]
-                    #とりあえず、漢字表記を形態素として登録する
-                    tmp_dic["morp"] = [morp_1]                
+                        #大学院生が同一節内で「大学＋院生」のように分離されるのに対処
+                        if not re.findall("\+",reg_exp) == []:
+                            reg_exp_split = reg_exp.split("+")
+                            for i in range(0,len(reg_exp_split)):
+                                tmp_list = ("".join(reg_exp_split[i])).split("/")
+                                reg_exp_list.append(tmp_list[0])
+                                tmp_dic["morp"] = ["".join(reg_exp_list)]
+                        else:
+                            reg_exp_list = reg_exp.split("/")
+                            #morp_1が漢字表記でmorp_2がひらがな表記
+                            morp_1 = reg_exp_list[0]
+                            morp_2 = reg_exp_list[1]
+                            #とりあえず、漢字表記を形態素として登録する
+                            tmp_dic["morp"] = [morp_1]
+
+
+
+            #テスト用
+            print "".join(tmp_dic["morp"])
+
 
             #述語情報を拾う。述語になって欲しいところは<係:文末>になっているので、これを述語に置きかえる
             if tmp_dic["case"] == ["<係:文末>"]:
@@ -140,6 +171,9 @@ def Syori(clause_list,clause_num,clause):
             if clause_info.case_analiyzed == "<体言止>":
                 info_dic["Predict"] = clause_info
 
+        #構文
+        info_dic["structure"] = struc
+            
         
         print "----------------"
     return info_dic
@@ -253,5 +287,9 @@ if __name__ == '__main__':
 
     sentence = raw_input("文を入力してネ☆\n")
     info_dic = knp_tab(sentence)
+         
+
+
+
 #    knp_tree(sentence)
 #    sentence = sentence.encode('utf_8')
