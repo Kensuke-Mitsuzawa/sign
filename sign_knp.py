@@ -6,7 +6,7 @@ import sys,codecs,subprocess,readline,re
 #sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
 
 ## 辞書の定義
-info_dic = {"structure":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none"}
+info_dic = {"Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none"}
 
 ## 節ごとの分析結果を格納するクラス
 class info:
@@ -24,9 +24,8 @@ class info:
 def Syori(clause_list,clause_num,clause):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
     print "--------------------"
-    
-    #構文読み取り用の変数
-    struc = ""
+
+    struc_dic = {"nor":[],"neg":[],"ques":[],"passive":[],"cause":[]}
 
     #カウンターの設置
     counter = 0
@@ -35,7 +34,8 @@ def Syori(clause_list,clause_num,clause):
     for value in clause:
 
         tmp_dic = {"dep":[],"per":[],"reg":[],"morp":[],"pos":[],"cat":[],"dom":[],"case":[],"case_ana":[]}
- 
+
+
         if counter == 0:
             start_pos = 1
             end_pos = value
@@ -54,13 +54,24 @@ def Syori(clause_list,clause_num,clause):
             sentence = clause_list[i]
 
             #構文情報を拾う
-            #疑問文のとき
-            if not re.findall(r"<モダリティ-疑問>",sentence) == []:
-                struc = "interrogative"
+            #構文情報はアスタリスクのところに出現するので、ここでif文分岐する
+            if not re.findall(r"\*.*D",sentence) == []:
+                #疑問文のとき
+                if not re.findall(r"<モダリティ-疑問>",sentence) == []:
+                    struc_dic["ques"] = "OK"
             
-            #否定文のとき
-            if not re.findall(r"<否定表現>",sentence) == []:
-                struc = "negative"
+                #否定文のとき
+                if not re.findall(r"<否定表現>",sentence) == []:
+                    struc_dic["neg"] = "OK"
+
+                #受け身のとき
+                if not re.findall(r"<態:受動>",sentence) == []:
+                    struc_dic["passive"] = "OK"
+
+                #使役文のとき
+                if not re.findall(r"<態:使役>",sentence) == []:
+                    struc_dic["cause"] = "OK"
+
 
             
             
@@ -123,7 +134,8 @@ def Syori(clause_list,clause_num,clause):
 
 
             #述語情報を拾う。述語になって欲しいところは<係:文末>になっているので、これを述語に置きかえる
-            if tmp_dic["case"] == ["<係:文末>"]:
+            #if tmp_dic["case"] == ["<係:文末>"]:
+            if not re.findall(r"\*.*D",sentence) == []:
 
                 if not [] == re.findall(r"<状態述語>",sentence):
                     tmp_dic["case_ana"] = re.findall(r"状態述語",sentence)
@@ -169,14 +181,15 @@ def Syori(clause_list,clause_num,clause):
             if clause_info.case_analiyzed == "動態述語":
                 info_dic["Predict"] = clause_info
             if clause_info.case_analiyzed == "<体言止>":
-                info_dic["Predict"] = clause_info
-
-        #構文
-        info_dic["structure"] = struc
-            
+                info_dic["Predict"] = clause_info            
         
         print "----------------"
-    return info_dic
+    return info_dic,struc_dic
+
+def make_sentence(info_dic,struc_dic):
+    
+
+
 
 def clause_count(tmp_list):
 ## 節の数と各節が何行文の情報を持っているのか調べる関数    
@@ -249,12 +262,13 @@ def knp_tab(sentence):
         clause_list.append(line)
         
     clause_num, clause = clause_count(tmp_list)
-    info_dic = Syori(clause_list,clause_num,clause)
+    info_dic,struc_dic = Syori(clause_list,clause_num,clause)
 
     print info_dic
+    print struc_dic
 
 
-    return info_dic
+    return info_dic,struc_dic
 
 def knp_tree(sentence):
 
@@ -286,7 +300,7 @@ def knp_tree(sentence):
 if __name__ == '__main__':
 
     sentence = raw_input("文を入力してネ☆\n")
-    info_dic = knp_tab(sentence)
+    info_dic,struc_dic = knp_tab(sentence)
          
 
 
