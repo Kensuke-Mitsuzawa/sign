@@ -21,11 +21,72 @@ class info:
         self.case = case
         self.case_analiyzed = case_ana
 
-def Syori(clause_list,clause_num,clause):
+def negative(clause_list,clause_num,clause):
+    #否定文に関する処理を行う
+    print "--------------------------\n"
+    print "about negative information\n"
+
+    #どの否定形か？を管理する変数
+    negative = ""
+    
+    #カウンターの設置
+    counter = 0
+    
+    #ここで新しい節を読みおなし
+    for value in clause:
+
+        if counter == 0:
+            start_pos = 1
+            end_pos = value
+
+        else:
+            start_pos = end_pos + 1
+            end_pos = end_pos + value
+
+        counter += 1
+
+        print start_pos,end_pos
+
+        #情報の抽出を正規表現でしていく
+        for i in range(start_pos,end_pos + 1):
+            sentence = clause_list[i]
+            
+            #+以降が単語に関する情報の（はず）なので、ここから情報を抽出する
+            if not re.findall(r"\+.*D",sentence) == []:
+                if not re.findall(r"<否定表現>",sentence) == []:
+                    print "否定表現が見つかりました。どうするか考えてください。半角英数で打ち込んでネ☆\n１たたかう２にげる３ねる\n"
+                    choice = raw_input("1 意思の否定 2 所有・存在の否定 3 完了の否定 4 不可能の意味 5 経験の否定 6 必要性の否定\n")
+
+                    #眠いのでアレだが、いちいち文字で否定種類をわけるのはいかがなものかと。数字でわけてもいいんじゃね。
+                    if choice == 1:
+                        negative = "willness"
+                    if choice == 2:
+                        negative = "posess"
+                    if choice == 3:
+                        negative = "perfect"
+                    if choice == 4:
+                        negative = "impossible"
+                    if choice == 5:
+                        negative = "experience"
+                    if choice == 6:
+                        negative = "need"
+
+
+            #否定表現がなかった時。つまり否定文じゃなかった時
+            else:
+                negative = ""
+
+
+
+                        
+    return negative
+
+
+def Syori(clause_list,clause_num,clause,negative_choice):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
     print "--------------------"
 
-    struc_dic = {"nor":[],"neg":[],"ques":[],"passive":[],"cause":[]}
+    struc_dic = {"nor":[],"ques":[],"passive":[],"cause":[],"if":[]}
 
     #カウンターの設置
     counter = 0
@@ -46,23 +107,17 @@ def Syori(clause_list,clause_num,clause):
 
         counter += 1
 
-        print start_pos,end_pos
-
         #情報の抽出を正規表現でしていく
         for i in range(start_pos,end_pos + 1):
 
             sentence = clause_list[i]
 
             #構文情報を拾う
-            #構文情報はアスタリスクのところに出現するので、ここでif文分岐する
-            if not re.findall(r"\*.*D",sentence) == []:
-                #疑問文のとき
+            #構文情報は+のところに出現するので、ここでif文分岐する
+            if not re.findall(r"\+.*D",sentence) == []:
+                #疑問文のとき（個人的には疑問文は？マークで判断してもよいとは思う）
                 if not re.findall(r"<モダリティ-疑問>",sentence) == []:
                     struc_dic["ques"] = "OK"
-            
-                #否定文のとき
-                if not re.findall(r"<否定表現>",sentence) == []:
-                    struc_dic["neg"] = "OK"
 
                 #受け身のとき
                 if not re.findall(r"<態:受動>",sentence) == []:
@@ -93,11 +148,13 @@ def Syori(clause_list,clause_num,clause):
                 tmp_dic["dom"] = re.findall("(<ドメイン:.*?>)",sentence)
 
             #格情報その１
-            if not re.findall(r"(<係:.*?>)",sentence) == []:
-                tmp_dic["case"] = re.findall("(<係:.*?>)",sentence)
+            if not re.findall(r"\+.*D",sentence) == []:
+                if not re.findall(r"(<係:.*?>)",sentence) == []:
+                    tmp_dic["case"] = re.findall("(<係:.*?>)",sentence)
             #格情報その２(格解析結果）
-            if not re.findall(r"<解析格:.*?>",sentence) == []:
-                tmp_dic["case_ana"] = re.findall("<解析格:.*?>",sentence)
+            if not re.findall(r"\+.*D",sentence) == []:
+                if not re.findall(r"<解析格:.*?>",sentence) == []:
+                    tmp_dic["case_ana"] = re.findall("<解析格:.*?>",sentence)
 
             #正規化表記 
             if not re.findall(r"\*.*D",sentence) == []:
@@ -162,7 +219,7 @@ def Syori(clause_list,clause_num,clause):
                 info_dic["Ga"] = clause_info
             if clause_info.case_analiyzed == "<解析格:ヲ>":
                 info_dic["Wo"] = clause_info
-            if clause_info.case_analiyzed == "<解析格:二>":
+            if clause_info.case_analiyzed == "<解析格:ニ>":
                 info_dic["Ni"] = clause_info
             if clause_info.case_analiyzed == "<解析格:へ>":
                 info_dic["He"] = clause_info
@@ -186,9 +243,17 @@ def Syori(clause_list,clause_num,clause):
         print "----------------"
     return info_dic,struc_dic
 
-def make_sentence(info_dic,struc_dic):
-    
+def make_sentence(info_dic,struc_dic,negative_choice):
 
+    
+    print "This section is Function make_sentence\n"
+
+    if not struc_dic["passive"] == []:
+        print info_dic["Ga"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
+
+
+
+    print "-----------------------------"
 
 
 def clause_count(tmp_list):
@@ -261,8 +326,11 @@ def knp_tab(sentence):
         tmp_list.append(line_split[0])
         clause_list.append(line)
         
+    #ここで各処理関数に情報を投げる
     clause_num, clause = clause_count(tmp_list)
-    info_dic,struc_dic = Syori(clause_list,clause_num,clause)
+    negative_choice = negative(clause_list,clause_num,clause)
+    info_dic,struc_dic = Syori(clause_list,clause_num,clause,negative_choice)
+    make_sentence(info_dic,struc_dic,negative_choice)
 
     print info_dic
     print struc_dic
@@ -305,5 +373,3 @@ if __name__ == '__main__':
 
 
 
-#    knp_tree(sentence)
-#    sentence = sentence.encode('utf_8')
