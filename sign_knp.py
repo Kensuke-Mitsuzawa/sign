@@ -23,8 +23,8 @@ class info:
 
 def negative(clause_list,clause_num,clause):
     #否定文に関する処理を行う
-    print "--------------------------\n"
-    print "about negative information\n"
+    print "--------------------------"
+    print "About negative information\n"
 
     #どの否定形か？を管理する変数
     negative = ""
@@ -44,8 +44,6 @@ def negative(clause_list,clause_num,clause):
             end_pos = end_pos + value
 
         counter += 1
-
-        print start_pos,end_pos
 
         #情報の抽出を正規表現でしていく
         for i in range(start_pos,end_pos + 1):
@@ -76,8 +74,11 @@ def negative(clause_list,clause_num,clause):
             else:
                 negative = ""
 
-
-
+    #-------------------------------
+    #単なる表示の都合上
+    if not negative == "":
+        print negative,"is selected"
+    #-------------------------------
                         
     return negative
 
@@ -107,11 +108,13 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
         counter += 1
 
+        
         #情報の抽出を正規表現でしていく
         for i in range(start_pos,end_pos + 1):
 
             sentence = clause_list[i]
-
+            
+            #--------------------------------------
             #構文情報を拾う
             #構文情報は+のところに出現するので、ここでif文分岐する
             if not re.findall(r"\+.*D",sentence) == []:
@@ -127,26 +130,43 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 if not re.findall(r"<態:使役>",sentence) == []:
                     struc_dic["cause"] = "OK"
 
+            #--------------------------------------
 
             
-            
+            #--------------------------------------
             #かかりうけ情報
             if not re.findall(r"\dD|-\dD",sentence) == []:
                 tmp_dic["dep"] = re.findall("\dD|-\dD",sentence)
+            #--------------------------------------
+
+
+            #--------------------------------------
             #人称情報
             if not re.findall(r".人称",sentence) == []:
                 tmp_dic["per"] = re.findall(".人称",sentence)
+            #--------------------------------------
+
                             
+            #--------------------------------------
             #品詞情報
             #info.pos = re.findall("
+
+            #--------------------------------------
+
+            #--------------------------------------
             #カテゴリー情報
             if not re.findall(r"(<カテゴリ:.*?>)",sentence) == []:
                 tmp_dic["cat"] = re.findall("(<カテゴリ:.*?>)",sentence)
+            #--------------------------------------
 
+
+            #--------------------------------------
             #ドメイン情報
             if not re.findall(r"(<ドメイン:.*?>)",sentence) == []:
                 tmp_dic["dom"] = re.findall("(<ドメイン:.*?>)",sentence)
+            #--------------------------------------
 
+            #--------------------------------------
             #格情報その１
             if not re.findall(r"\+.*D",sentence) == []:
                 if not re.findall(r"(<係:.*?>)",sentence) == []:
@@ -155,7 +175,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             if not re.findall(r"\+.*D",sentence) == []:
                 if not re.findall(r"<解析格:.*?>",sentence) == []:
                     tmp_dic["case_ana"] = re.findall("<解析格:.*?>",sentence)
+            #--------------------------------------
 
+            #--------------------------------------
             #正規化表記 
             if not re.findall(r"\*.*D",sentence) == []:
                 if tmp_dic["reg"] == []:
@@ -183,7 +205,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                             morp_2 = reg_exp_list[1]
                             #とりあえず、漢字表記を形態素として登録する
                             tmp_dic["morp"] = [morp_1]
-
+            #--------------------------------------    
 
 
             #テスト用
@@ -367,7 +389,7 @@ def knp_tree(sentence):
 
 if __name__ == '__main__':
 
-    sentence = raw_input("文を入力してネ☆\n")
+    sentence = raw_input("文を入力してネ☆\n※必ず文末に読点かクエスチョンマークで終了してください。\n")
     info_dic,struc_dic = knp_tab(sentence)
          
 
