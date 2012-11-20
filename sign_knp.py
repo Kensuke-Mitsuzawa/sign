@@ -6,11 +6,11 @@ import sys,codecs,subprocess,readline,re
 #sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
 
 ## 辞書の定義
-info_dic = {"Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none"}
+info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none"}
 
 ## 節ごとの分析結果を格納するクラス
 class info:
-    def __init__(self,dep,per,reg,morp,pos,cat,dom,case,case_ana):
+    def __init__(self,dep,per,reg,morp,pos,cat,dom,case,case_ana,order):
         self.dependency = dep
         self.person = per
         self.regular = reg
@@ -20,6 +20,7 @@ class info:
         self.domain = dom
         self.case = case
         self.case_analiyzed = case_ana
+        self.order = order
 
 def negative(clause_list,clause_num,clause):
     #否定文に関する処理を行う
@@ -91,6 +92,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
     #カウンターの設置
     counter = 0
+
+    #語の並び情報(order)
+    order = 0
     
     #ここで新しい節を読みおなし
     for value in clause:
@@ -107,13 +111,12 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             end_pos = end_pos + value
 
         counter += 1
-
+        
         
         #情報の抽出を正規表現でしていく
         for i in range(start_pos,end_pos + 1):
-
             sentence = clause_list[i]
-            
+
             #--------------------------------------
             #構文情報を拾う
             #構文情報は+のところに出現するので、ここでif文分岐する
@@ -130,41 +133,33 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 if not re.findall(r"<態:使役>",sentence) == []:
                     struc_dic["cause"] = "OK"
 
-            #--------------------------------------
-
             
             #--------------------------------------
             #かかりうけ情報
             if not re.findall(r"\dD|-\dD",sentence) == []:
                 tmp_dic["dep"] = re.findall("\dD|-\dD",sentence)
-            #--------------------------------------
 
 
             #--------------------------------------
             #人称情報
             if not re.findall(r".人称",sentence) == []:
                 tmp_dic["per"] = re.findall(".人称",sentence)
-            #--------------------------------------
 
                             
             #--------------------------------------
-            #品詞情報
-            #info.pos = re.findall("
-
-            #--------------------------------------
+            #品詞情報(副詞と形容詞のみ抽出)
+            if re.findall(r"連体修飾",sentence) == [] or re.findall(r"<係:連用>",sentence) == []:
+                tmp_dic["pos"] = "ok"
 
             #--------------------------------------
             #カテゴリー情報
             if not re.findall(r"(<カテゴリ:.*?>)",sentence) == []:
                 tmp_dic["cat"] = re.findall("(<カテゴリ:.*?>)",sentence)
             #--------------------------------------
-
-
-            #--------------------------------------
             #ドメイン情報
+
             if not re.findall(r"(<ドメイン:.*?>)",sentence) == []:
                 tmp_dic["dom"] = re.findall("(<ドメイン:.*?>)",sentence)
-            #--------------------------------------
 
             #--------------------------------------
             #格情報その１
@@ -175,7 +170,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             if not re.findall(r"\+.*D",sentence) == []:
                 if not re.findall(r"<解析格:.*?>",sentence) == []:
                     tmp_dic["case_ana"] = re.findall("<解析格:.*?>",sentence)
-            #--------------------------------------
+                
+                if not re.findall(r"<主題表現>",sentence) == []:
+                    tmp_dic["case_ana"] = "主題表現"
 
             #--------------------------------------
             #正規化表記 
@@ -211,9 +208,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             #テスト用
             print "".join(tmp_dic["morp"])
 
-
+            #--------------------------------------
             #述語情報を拾う。述語になって欲しいところは<係:文末>になっているので、これを述語に置きかえる
-            #if tmp_dic["case"] == ["<係:文末>"]:
             if not re.findall(r"\*.*D",sentence) == []:
 
                 if not [] == re.findall(r"<状態述語>",sentence):
@@ -223,7 +219,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 if not [] == re.findall(r"<体言止>",sentence):
                     tmp_dic["case_ana"] = re.findall(r"<体言止>",sentence)
 
-            
+            #--------------------------------------
             #infoクラスに情報を移していく
             t_dep = "".join(tmp_dic["dep"])
             t_per = "".join(tmp_dic["per"])
@@ -234,9 +230,13 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             t_dom = "".join(tmp_dic["dom"])
             t_case = "".join(tmp_dic["case"])
             t_case_ana = "".join(tmp_dic["case_ana"])
-            clause_info = info(t_dep,t_per,t_reg,t_morp,t_pos,t_cat,t_dom,t_case,t_case_ana)
 
+            clause_info = info(t_dep,t_per,t_reg,t_morp,t_pos,t_cat,t_dom,t_case,t_case_ana,order)
+
+            #--------------------------------------
             #何格か？どんな述語か？判別してinfo_dicのそれぞれの項目に登録
+            if clause_info.case_analiyzed == "主題表現":
+                info_dic["main"] = clause_info
             if clause_info.case_analiyzed == "<解析格:ガ>":
                 info_dic["Ga"] = clause_info
             if clause_info.case_analiyzed == "<解析格:ヲ>":
@@ -260,10 +260,19 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             if clause_info.case_analiyzed == "動態述語":
                 info_dic["Predict"] = clause_info
             if clause_info.case_analiyzed == "<体言止>":
-                info_dic["Predict"] = clause_info            
+                info_dic["Predict"] = clause_info   
+            #--------------------------------------
         
+        #語の並び情報orderを＋１しておく
+        print "word position is",order
+        order += 1
         print "----------------"
     return info_dic,struc_dic
+
+#def reorder(info_dic,struc_dic):
+
+
+
 
 def make_sentence(info_dic,struc_dic,negative_choice):
 
