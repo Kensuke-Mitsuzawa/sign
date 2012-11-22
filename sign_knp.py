@@ -6,7 +6,7 @@ import sys,codecs,subprocess,readline,re
 #sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
 
 ## 辞書の定義
-info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none","Modifier":"none"}
+info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none","Modi":"none"}
 
 ## 節ごとの分析結果を格納するクラス
 class info:
@@ -171,10 +171,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
             #--------------------------------------
             #修飾語を拾う
-#            if not re.findall(r"\+.*D",sentence) == []:
-#                if re.findall(r"連体修飾",sentence) == [] or re.findall(r"<係:連用>",sentence) == []:
-#                    tmp_dic["case_ana"] = "修飾語"
-                    # tmp_dic["pos"] = "ok"
+            if not re.findall(r"\+.*D",sentence) == []:
+                if not re.findall(r"連体修飾",sentence) == [] or not re.findall(r"<係:連用>",sentence) == []:
+                    tmp_dic["case_ana"] = "修飾"
 
             #--------------------------------------
             #正規化表記を拾う
@@ -214,7 +213,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             #述語情報を拾う。述語になって欲しいところは<係:文末>になっているので、これを述語に置きかえる
             if not re.findall(r"\+.*D",sentence) == []:
 
-                if not [] == re.findall(r"<状態述語>",sentence):
+                #このif条件に注意。修飾語と関係するエラーが起きることあり
+                if not re.findall(r"<状態述語>",sentence) == []  and not re.findall(r"<格要素>",sentence) == []:
                     tmp_dic["case_ana"] = re.findall(r"状態述語",sentence)
                 if not [] == re.findall(r"<動態述語>",sentence):
                     tmp_dic["case_ana"] = re.findall(r"動態述語",sentence)
@@ -263,10 +263,11 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 info_dic["Predict"] = clause_info
             if clause_info.case_analiyzed == "<体言止>":
                 info_dic["Predict"] = clause_info  
-            if clause_info.case_analiyzed == "修飾語":
-                info_dic["Modifier"] = clause_info   
+            if clause_info.case_analiyzed == "修飾":
+                info_dic["Modi"] = clause_info   
             #--------------------------------------
-        
+
+
         #語の並び情報orderを＋１しておく
         print "word position is",order
         order += 1
