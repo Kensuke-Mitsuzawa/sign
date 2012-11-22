@@ -174,6 +174,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             if not re.findall(r"\+.*D",sentence) == []:
                 if not re.findall(r"連体修飾",sentence) == [] or not re.findall(r"<係:連用>",sentence) == []:
                     tmp_dic["case_ana"] = "修飾"
+                    tmp_dic["pos"] = "ok"
 
             #--------------------------------------
             #正規化表記を拾う
@@ -302,13 +303,21 @@ def reorder(info_dic,struc_dic):
     print order_list
 
     #------------------------------------------
-
+    relation_list = []
+    
     for iteration in range(0,len(order_list)):
         word_i = order_list[iteration]
         
-        if word_i.pos == "OK":
-            print "success"
-    
+        if (order_list[iteration]).pos == "ok":
+            pointer = iteration
+            
+            while (order_list[iteration]).pos == "ok":
+                relation_list.append(order_list[iteration])
+                iteration += 1
+                
+            else:
+                print relation_list
+                
 
 def make_sentence(info_dic,struc_dic,negative_choice):
 
