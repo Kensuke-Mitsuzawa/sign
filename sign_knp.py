@@ -169,12 +169,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 if not re.findall(r"<主題表現>",sentence) == []:
                     tmp_dic["case_ana"] = "主題表現"
 
-            #--------------------------------------
-            #修飾語を拾う
-            if not re.findall(r"\+.*D",sentence) == []:
-                if not re.findall(r"連体修飾",sentence) == [] or not re.findall(r"<係:連用>",sentence) == []:
-                    tmp_dic["case_ana"] = "修飾"
-                    tmp_dic["pos"] = "ok"
+
 
             #--------------------------------------
             #正規化表記を拾う
@@ -236,6 +231,16 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
             clause_info = info(t_dep,t_per,t_reg,t_morp,t_pos,t_cat,t_dom,t_case,t_case_ana,order)
 
+
+            #--------------------------------------
+            #修飾語を拾う
+            if not re.findall(r"\+.*D",sentence) == []:
+                if not re.findall(r"連体修飾",sentence) == [] or not re.findall(r"<係:連用>",sentence) == []:
+                    key_name = "Modi" + chr(order)
+                    clause_info.pos = "ok"
+
+                    info_dic.setdefault(key_name,clause_info)
+
             #--------------------------------------
             #何格か？どんな述語か？判別してinfo_dicのそれぞれの項目に登録
             if clause_info.case_analiyzed == "主題表現":
@@ -264,8 +269,6 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 info_dic["Predict"] = clause_info
             if clause_info.case_analiyzed == "<体言止>":
                 info_dic["Predict"] = clause_info  
-            if clause_info.case_analiyzed == "修飾":
-                info_dic["Modi"] = clause_info   
             #--------------------------------------
 
 
@@ -311,12 +314,21 @@ def reorder(info_dic,struc_dic):
         if (order_list[iteration]).pos == "ok":
             pointer = iteration
             
+
+            #いまここらへんにバグっぽいのがあるのがわかっている
             while (order_list[iteration]).pos == "ok":
                 relation_list.append(order_list[iteration])
                 iteration += 1
+                for tmp in relation_list:
+                    print tmp.morpheme
+                print "-------------"
                 
             else:
-                print relation_list
+                relation_list = [x for x in reversed(relation_list)]
+                print len(relation_list)
+                #for tmp in relation_list:
+                    
+                    
                 
 
 def make_sentence(info_dic,struc_dic,negative_choice):
