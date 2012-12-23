@@ -88,7 +88,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
     print "--------------------"
 
-    struc_dic = {"nor":[],"ques":[],"passive":[],"cause":[],"if":[]}
+    struc_dic = {"nor":[],"ques":[],"passive":[],"cause":[],"if":[],"force":[]}
 
     #カウンターの設置
     counter = 0
@@ -131,8 +131,10 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
                 #使役文のとき
                 if not re.findall(r"<態:使役>",sentence) == []:
-                    struc_dic["cause"] = "OK"
+                    struc_dic["force"] = "OK"
 
+                else:
+                    struc_dic["nor"] = "OK"
             
             #--------------------------------------
             #かかりうけ情報
@@ -283,12 +285,14 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 def reorder(info_dic,struc_dic):
     order_num_list = []
     order_list = []
-
+    #------------------------------------------
+    #　入力された文の順番通りに再構成する
+    #　info_dicのorderインスタンスに順番情報があるので、この順番情報を元にきちんと並び替え処理を行う
     #------------------------------------------
     #info_dic内のそれぞれの格の入力時の並び番号を調べて、並び替え
     for key in info_dic:
         if not info_dic[key] == "none":
-            print info_dic[key].morpheme
+           # print info_dic[key].morpheme
             order_number = info_dic[key].order
             order_num_list.append(order_number)
     
@@ -304,8 +308,14 @@ def reorder(info_dic,struc_dic):
                     order_list.append(info_dic[key])
     
     print order_list
+    #------------------------------------------
+    #ここで入力文の通りに単語が並んでいるはず
+    #------------------------------------------
+
 
     #------------------------------------------
+    #修飾語のみを並び替える処理
+
     relation_list = []
     
     for iteration in range(0,len(order_list)):
@@ -336,9 +346,17 @@ def make_sentence(info_dic,struc_dic,negative_choice):
     
     print "This section is Function make_sentence\n"
 
-    if not struc_dic["passive"] == []:
-        print info_dic["Ga"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
+    if not struc_dic["nor"] == []:
+        print info_dic["main"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
 
+    if not struc_dic["passive"] == []:
+        print info_dic["main"].morpheme, info_dic["Ni"].morpheme,info_dic["Predict"].morpheme,"pt()"
+
+    if not struc_dic["force"] == []:
+        print info_dic["main"].morpheme, info_dic["Ni"].morpheme, "pt() ",info_dic["Wo"].morpheme, info_dic["Predict"].morpheme,"+顎あげ ","わかる(+うなずき) ",info_dic["Wo"].morpheme, info_dic["Predict"].morpheme
+
+    if not struc_dic["if"] == []:
+        info_dic["main"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
 
 
     print "-----------------------------"
