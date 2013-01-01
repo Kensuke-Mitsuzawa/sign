@@ -9,6 +9,39 @@
 
 import sys,codecs,subprocess,readline,re
 
+def juman(word):
+    cat = ""
+    domain = ""
+
+    echo = subprocess.Popen(['echo',word],
+                            stdout=subprocess.PIPE,
+                            )
+
+
+    juman = subprocess.Popen(['juman'], 
+                             stdin=echo.stdout,
+                             stdout=subprocess.PIPE,
+                             )
+
+
+    end_of_pipe_tab = juman.stdout
+
+    for result in end_of_pipe_tab:
+        result_list = result.split()
+
+
+        for detail in result_list:
+            
+            if not re.findall(r"カテゴリ:",detail) == []:
+                detail = detail.strip('"')
+                cat = detail
+
+            if not re.findall(r"ドメイン:",detail) == []:
+                detail = detail.strip('"')
+                domain = detail
+
+    return cat,domain
+
 def Syori(clause_list,clause_num,clause):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
     #print "--------------------"
@@ -36,7 +69,7 @@ def Syori(clause_list,clause_num,clause):
         #情報の抽出を正規表現でしていく
         for i in range(start_pos,end_pos + 1):
             sentence = clause_list[i]
-               
+
             #print sentence
 
 
@@ -60,6 +93,7 @@ def Syori(clause_list,clause_num,clause):
         tmp = a_r_list[i]
         tmp = tmp.strip(">")
         if not re.findall("格解析結果:.*",tmp) == []:
+            print_list = []
             a_r = a_r_list[i]
             
             case_relation_list = a_r.split(":")
@@ -74,8 +108,12 @@ def Syori(clause_list,clause_num,clause):
                 case = list[0]
                 word_to_case = list[2]
 
-                print case+" "+word_to_case
-                
+               
+                if not word_to_case == "-":
+
+                    category,domain = juman(word_to_case)
+                    format = case+" "+word_to_case+" "+category
+                    print_list.append(format)
 
                 #-----------------------------------------------------------
                 #以下は不要な部分なので、すべてコメントオフ
@@ -156,7 +194,8 @@ def Syori(clause_list,clause_num,clause):
     print predicate,"\t",ga,"\t",wo,"\t",ni,"\t",de,"\t",kara,"\t",yori,"\t",time,"\t",outside,"\t",no,"\t",taisuru,"\t",modify,"\t",kawaru
                 
 '''
-
+    print_format = "\t".join(print_list)
+    print print_format
 
 def clause_count(tmp_list):
 ## 節の数と各節が何行文の情報を持っているのか調べる関数    
@@ -236,7 +275,7 @@ def knp_tab(sentence):
 
 if __name__ == '__main__':
 
-    sentence = raw_input("文を入力してネ☆\n※必ず文末に読点かクエスチョンマークで終了してください。\n")
+    sentence = raw_input()
     knp_tab(sentence)
     
          
