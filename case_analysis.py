@@ -11,7 +11,7 @@ import sys,codecs,subprocess,readline,re
 
 def Syori(clause_list,clause_num,clause):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
-    print "--------------------"
+    #print "--------------------"
 
     #カウンターの設置
     counter = 0
@@ -32,12 +32,12 @@ def Syori(clause_list,clause_num,clause):
 
         counter += 1
         
-        print "below sentence is result of KNP"        
+        #print "below sentence is result of KNP"        
         #情報の抽出を正規表現でしていく
         for i in range(start_pos,end_pos + 1):
             sentence = clause_list[i]
                
-            print sentence
+            #print sentence
 
 
             #-----------------------------------------------------------
@@ -67,43 +67,87 @@ def Syori(clause_list,clause_num,clause):
             case = case_relation_list[3]
             each_case_list = case.split(";")
 
-            ##ここから先は書き直しが必要。理由は、KNPの格の出力は常に同じフォーマットではないから。また正規表現を利用して抽出していくのが最適か?
+            for ii in range(len(each_case_list)):
+                each_case = each_case_list[ii]
+                list = each_case.split("/")
 
-            ga = each_case_list[0]
-            ga = (ga.split("/"))[0]+" "+(ga.split("/"))[2]
+                case = list[0]
+                word_to_case = list[2]
+
+                print case+" "+word_to_case
+                
+
+                #-----------------------------------------------------------
+                #以下は不要な部分なので、すべてコメントオフ
+                #現在のところ、残しているが、消してもいいだろう。 
+                '''
+                if not re.findall(r"ガ",each_case_list[ii]) == []:
+                    ga = each_case_list[ii]
+                    ga = (ga.split("/"))[0]+" "+(ga.split("/"))[2]
+
+                if not re.findall("ヲ",each_case_list[ii]) == []:
+                    wo = each_case_list[ii]
+                    wo = (wo.split("/"))[0]+" "+(wo.split("/"))[2]
             
-            wo = each_case_list[1]
-            wo = (wo.split("/"))[0]+" "+(wo.split("/"))[2]
+                if not re.findall("ニ",each_case_list[ii]) == []:
+                    ni = each_case_list[ii]
+                    ni = (ni.split("/"))[0]+" "+(ni.split("/"))[2]           
 
-            ni = each_case_list[2]
-            ni = (ni.split("/"))[0]+" "+(ni.split("/"))[2]
+                if not re.findall("デ",each_case_list[ii]) == []:
+                    de = each_case_list[ii]
+                    de = (de.split("/"))[0]+" "+(de.split("/"))[2]
 
-            de = each_case_list[3]
-            de = (de.split("/"))[0]+" "+(de.split("/"))[2]
+                if not re.findall("カラ",each_case_list[ii]) == []:
+                    kara = each_case_list[ii]
+                    kara = (kara.split("/"))[0]+" "+(kara.split("/"))[2]
+
+                if not re.findall("ヨリ",each_case_list[ii]) == []:
+                    yori = each_case_list[ii]
+                    yori = (yori.split("/"))[0]+" "+(yori.split("/"))[2]
             
-            kara = each_case_list[4]
-            kara = (kara.split("/"))[0]+" "+(kara.split("/"))[2]
+                if not re.findall("時間",each_case_list[ii]) == []:
+                    time = each_case_list[ii]
+                    time = (time.split("/"))[0]+" "+(time.split("/"))[2]
 
-            yori = each_case_list[5]
-            yori = (yori.split("/"))[0]+" "+(yori.split("/"))[2]
+                if not re.findall("外の関係",each_case_list[ii]) == []:
+                    outside = each_case_list[ii]
+                    outside = (outside.split("/"))[0]+" "+(outside.split("/"))[2]
 
-            time = each_case_list[6]
-            time = (time.split("/"))[0]+" "+(time.split("/"))[2]
+                if not re.findall("ノ",each_case_list[ii]) == []:
+                    no = each_case_list[ii]
+                    no = (no.split("/"))[0]+" "+(no.split("/"))[2]
+                    
+                if not re.findall("ニタイスル",each_case_list[ii]) == []:
+                    taisuru = each_case_list[ii]
+                    taisuru = (taisuru.split("/"))[0]+" "+(taisuru.split("/"))[2]
+                
+                if not re.findall("修飾",each_case_list[ii]) == []:
+                    modify = each_case_list[ii]
+                    modify = (modify.split("/"))[0]+" "+(modify.split("/"))[2]
 
-            outside = ga = each_case_list[7]
-            outside = (outside.split("/"))[0]+" "+(outside.split("/"))[2]
+                if not re.findall("ニカワル",each_case_list[ii]) == []:
+                    kawaru = each_case_list[ii]
+                    kawaru = (kawaru.split("/"))[0]+" "+(kawaru.split("/"))[2]
 
-            no = each_case_list[8]
-            no = (no.split("/"))[0]+" "+(no.split("/"))[2]
+                if not re.findall("へ",each_case_list[ii]) == []:
+                    he = each_case_list[ii]
+                    he = (he.split("/"))[0]+" "+(he.split("/"))[2]
 
-            taisuru = each_case_list[9]
-            taisuru = (taisuru.split("/"))[0]+" "+(taisuru.split("/"))[2]
+                if not re.findall("ト",each_case_list[ii]) == []:
+                    to = each_case_list[ii]
+                    to = (to.split("/"))[0]+" "+(to.split("/"))[2]
 
-            modify = each_case_list[10]
-            modify = (modify.split("/"))[0]+" "+(modify.split("/"))[2]
+                if not re.findall("マデ",each_case_list[ii]) == []:
+                    made = each_case_list[ii]
+                    made = (made.split("/"))[0]+" "+(made.split("/"))[2]
 
-            kawaru = each_case_list[11]
-            kawaru = (kawaru.split("/"))[0]+" "+(kawaru.split("/"))[2]
+                if not re.findall("トスル",each_case_list[ii]) == []:
+                    tosuru = each_case_list[ii]
+                    tosuru = (tosuru.split("/"))[0]+" "+(tosuru.split("/"))[2]
+
+
+
+
             
             #-----------------------------------------------------------
 
@@ -111,6 +155,7 @@ def Syori(clause_list,clause_num,clause):
     #最後に、出力
     print predicate,"\t",ga,"\t",wo,"\t",ni,"\t",de,"\t",kara,"\t",yori,"\t",time,"\t",outside,"\t",no,"\t",taisuru,"\t",modify,"\t",kawaru
                 
+'''
 
 
 def clause_count(tmp_list):
@@ -121,7 +166,7 @@ def clause_count(tmp_list):
     clause = []
     c_num = -1
 
-    print "-----------------------------"
+    #print "-----------------------------"
 
     for tmp in tmp_list:
  
@@ -147,8 +192,8 @@ def clause_count(tmp_list):
             c_num += 1
 
     clause.pop(0)
-    print "Number of Clauses is",clause_num
-    print "List of lines in each clause",clause
+    #print "Number of Clauses is",clause_num
+    #print "List of lines in each clause",clause
 
     return clause_num,clause
 
