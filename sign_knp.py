@@ -139,8 +139,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             #--------------------------------------
             #かかりうけ情報
             if not re.findall(r"\+ \dD|\+ -\dD|\+ \dP|\+ -\dP",sentence) == []:
-                tmp_dic["tmp"] = re.findall(r"\+ \d|\+ -\d",sentence)
-                tmp_dic["tmp"] = int(("".join(tmp_dic["tmp"])).strip("+ "))
+                tmp_dic["dep"] = re.findall(r"\+ \d|\+ -\d",sentence)
+                tmp_dic["dep"] = int(("".join(tmp_dic["dep"])).strip("+ "))
 
             #数字情報だけ欲しいので、旧コードはコメントオフしておく
             #一応残してあるだけなんで、消してもかまわない
@@ -231,7 +231,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
             #--------------------------------------
             #infoクラスに情報を移していく
-            t_dep = "".join(tmp_dic["dep"])
+            #tmp_dic["dep"]だけは中身がint型整数
+            t_dep = tmp_dic["dep"]
             t_per = "".join(tmp_dic["per"])
             t_reg = "".join(tmp_dic["reg"])
             t_morp = "".join(tmp_dic["morp"])
@@ -351,11 +352,41 @@ def reorder(info_dic,struc_dic):
                     
                 
 
-def make_sentence(info_dic,struc_dic,negative_choice):
+def make_sentence(info_dic,struc_dic,negative_choice,clause_num):
 
-    
+#---------------------------------------------------------------------
+#このあたりで格とmodifierの並び替えをあらかじめしておく
+#~格set = ~格 + modifier_1 + modifier_2 ... とする
+#出力は print ~格set,~格set,....　とする
+#---------------------------------------------------------------------    
     print "This section is Function make_sentence\n"
+    
+    dep_list = []
+    #単語数の分だけリストの要素を用意する
+    position_list = []
+    for temp in range(clause_num):
+        position_list.append(0)
+    
+    print position_list
 
+    #単語の並び順にposition_listを構成する
+    #このイテレーションの後には、position_listとdep_listが出来上がっている
+    for i in range(clause_num):
+        for case in info_dic:
+            if not (info_dic[case]) == "none":
+                if i == info_dic[case].order:
+                    print i,info_dic[case].morpheme
+                    position_list[i] = info_dic[case]
+                    dep_list.append(info_dic[case].dependency)
+
+    #position_listは格インスタンスを、入力文と同じに並び変えた状態のリスト
+    #dep_listは係り先の番号のみを入力文と同じ並びで記述した状態のリスト
+    for one in position_list:
+        #もし修飾語ならposインスタンスがokになっている
+        if one.pos == "ok":
+            print one.dependency
+
+    '''
     if not struc_dic["nor"] == []:
         print info_dic["main"].morpheme,info_dic["Ga"].morpheme,info_dic["Predict"].morpheme
 
@@ -367,7 +398,7 @@ def make_sentence(info_dic,struc_dic,negative_choice):
 
     if not struc_dic["if"] == []:
         info_dic["main"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
-
+'''
 
     print "-----------------------------"
 
@@ -446,7 +477,7 @@ def knp_tab(sentence):
     clause_num, clause = clause_count(tmp_list)
     negative_choice = negative(clause_list,clause_num,clause)
     info_dic,struc_dic = Syori(clause_list,clause_num,clause,negative_choice)
-    make_sentence(info_dic,struc_dic,negative_choice)
+    make_sentence(info_dic,struc_dic,negative_choice,clause_num)
     reorder(info_dic,struc_dic)
 
     print info_dic
