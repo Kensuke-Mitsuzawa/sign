@@ -138,10 +138,20 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             
             #--------------------------------------
             #かかりうけ情報
-            if not re.findall(r"\dD|-\dD",sentence) == []:
+            if not re.findall(r"\+ \dD|\+ -\dD|\+ \dP|\+ -\dP",sentence) == []:
+                tmp_dic["tmp"] = re.findall(r"\+ \d|\+ -\d",sentence)
+                tmp_dic["tmp"] = int(("".join(tmp_dic["tmp"])).strip("+ "))
+
+            #数字情報だけ欲しいので、旧コードはコメントオフしておく
+            #一応残してあるだけなんで、消してもかまわない
+            '''
+            if not re.findall(r"\dD|-\dD",sentence)==[]:
                 tmp_dic["dep"] = re.findall("\dD|-\dD",sentence)
-
-
+                print tmp_dic["dep"]
+            if not re.findall(r"\dP|-\dP",sentence)==[]:
+                tmp_dic["dep"] = re.findall("\dP|-\dP",sentence)
+                print tmp_dic["dep"]
+            '''
             #--------------------------------------
             #人称情報
             if not re.findall(r".人称",sentence) == []:
@@ -307,7 +317,7 @@ def reorder(info_dic,struc_dic):
                 if info_dic[key].order == num:
                     order_list.append(info_dic[key])
     
-    print order_list
+    print "ordered list is:",order_list
     #------------------------------------------
     #ここで入力文の通りに単語が並んでいるはず
     #------------------------------------------
@@ -347,7 +357,7 @@ def make_sentence(info_dic,struc_dic,negative_choice):
     print "This section is Function make_sentence\n"
 
     if not struc_dic["nor"] == []:
-        print info_dic["main"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
+        print info_dic["main"].morpheme,info_dic["Ga"].morpheme,info_dic["Predict"].morpheme
 
     if not struc_dic["passive"] == []:
         print info_dic["main"].morpheme, info_dic["Ni"].morpheme,info_dic["Predict"].morpheme,"pt()"
