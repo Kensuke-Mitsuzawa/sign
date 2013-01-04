@@ -228,8 +228,15 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                     tmp_dic["case_ana"] = re.findall(r"動態述語",sentence)
                 if not [] == re.findall(r"<体言止>",sentence):
                     tmp_dic["case_ana"] = re.findall(r"<体言止>",sentence)
+            #--------------------------------------
+            #品詞情報（とはいってもposはcaseかmodiかどっちかだが）
+            if not re.findall(r"\+.*D",sentence) == []:
+
+                if not re.findall(r"解析格:.*",sentence) == []:
+                    tmp_dic["pos"] = "case"
 
             #--------------------------------------
+
             #infoクラスに情報を移していく
             #tmp_dic["dep"]だけは中身がint型整数
             t_dep = tmp_dic["dep"]
@@ -243,18 +250,17 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             t_case_ana = "".join(tmp_dic["case_ana"])
 
             clause_info = info(t_dep,t_per,t_reg,t_morp,t_pos,t_cat,t_dom,t_case,t_case_ana,order)
-
-
             #--------------------------------------
             #修飾語を拾う
+            #ここの部分はあとづけでなんとかしかたので、できれば、この部分をうまく処理した方がよい
             if not re.findall(r"\+.*D",sentence) == []:
                 if not re.findall(r"連体修飾",sentence) == [] or not re.findall(r"<係:連用>",sentence) == []:
                     key_name = "Modi" + chr(order)
-                    clause_info.pos = "ok"
+                    clause_info.pos = "modi"
 
                     info_dic.setdefault(key_name,clause_info)
-
             #--------------------------------------
+
             #何格か？どんな述語か？判別してinfo_dicのそれぞれの項目に登録
             if clause_info.case_analiyzed == "主題表現":
                 info_dic["main"] = clause_info
@@ -362,6 +368,7 @@ def make_sentence(info_dic,struc_dic,negative_choice,clause_num):
     print "This section is Function make_sentence\n"
     
     dep_list = []
+    set_list = []
     #単語数の分だけリストの要素を用意する
     position_list = []
     for temp in range(clause_num):
@@ -381,10 +388,32 @@ def make_sentence(info_dic,struc_dic,negative_choice,clause_num):
 
     #position_listは格インスタンスを、入力文と同じに並び変えた状態のリスト
     #dep_listは係り先の番号のみを入力文と同じ並びで記述した状態のリスト
-    for one in position_list:
-        #もし修飾語ならposインスタンスがokになっている
-        if one.pos == "ok":
-            print one.dependency
+
+    print "test",position_list[1].pos
+    number = 1
+    start_number = number
+    set_list = []
+    print position_list[number].pos
+    print "now position list is",position_list
+    end_number,set_list,position_list = turn_modify(number,set_list,position_list)
+    del position_list[start_number:end_number+1]
+    print "after function position list is",position_list
+
+def turn_modify(number,set_list,position_list):
+    #終了条件。もし調べた対象が「格」なら、そこで終了
+    if (position_list[number].pos) == "case": 
+        print "this if/case is working right"
+        set_list.append(position_list[number].morpheme)
+        return number,set_list,position_list
+     
+    #継続して再帰する条件。調べた対象が「修飾語」なら、継続して再帰
+    if (position_list[number].pos) == "modi":
+        set_list.append(position_list[number].morpheme)
+        number = (position_list[number].dependency)
+        print "this if/modi is working right"
+
+        return turn_modify(number,set_list,position_list)
+            
 
     '''
     if not struc_dic["nor"] == []:
@@ -400,7 +429,6 @@ def make_sentence(info_dic,struc_dic,negative_choice,clause_num):
         info_dic["main"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
 '''
 
-    print "-----------------------------"
 
 
 def clause_count(tmp_list):
