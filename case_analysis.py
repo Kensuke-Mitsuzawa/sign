@@ -112,7 +112,7 @@ def Syori(clause_list,clause_num,clause):
                 if not word_to_case == "-":
 
                     category,domain = juman(word_to_case)
-                    format = case+" "+word_to_case+" "+category
+                    format = case+" "+word_to_case+" "+category+" "+domain
                     print_list.append(format)
 
                 #-----------------------------------------------------------

@@ -3,6 +3,8 @@
 
 
 import sys,codecs,subprocess,readline,re
+
+from types import *
 #sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
 
 ## 辞書の定義
@@ -368,7 +370,7 @@ def make_sentence(info_dic,struc_dic,negative_choice,clause_num):
     print "This section is Function make_sentence\n"
     
     dep_list = []
-    set_list = []
+    case_set_dic = {}
     #単語数の分だけリストの要素を用意する
     position_list = []
     for temp in range(clause_num):
@@ -389,31 +391,42 @@ def make_sentence(info_dic,struc_dic,negative_choice,clause_num):
     #position_listは格インスタンスを、入力文と同じに並び変えた状態のリスト
     #dep_listは係り先の番号のみを入力文と同じ並びで記述した状態のリスト
 
-    print "test",position_list[1].pos
-    number = 1
+        
+
+    number = 0
     start_number = number
-    set_list = []
-    print position_list[number].pos
-    print "now position list is",position_list
-    end_number,set_list,position_list = turn_modify(number,set_list,position_list)
-    del position_list[start_number:end_number+1]
-    print "after function position list is",position_list
+    end_number = number
+    case_list = []
 
-def turn_modify(number,set_list,position_list):
-    #終了条件。もし調べた対象が「格」なら、そこで終了
-    if (position_list[number].pos) == "case": 
-        print "this if/case is working right"
-        set_list.append(position_list[number].morpheme)
-        return number,set_list,position_list
-     
-    #継続して再帰する条件。調べた対象が「修飾語」なら、継続して再帰
-    if (position_list[number].pos) == "modi":
-        set_list.append(position_list[number].morpheme)
-        number = (position_list[number].dependency)
-        print "this if/modi is working right"
+    print "test",position_list[end_number].pos
+    end_number,set_list,position_list = turn_modify(number,end_number,position_list)
+    del position_list[start_number:end_number+1]  
 
-        return turn_modify(number,set_list,position_list)
-            
+
+def turn_modify(number,end_number,position_list):
+
+    index = 0
+    next_index = 0
+    
+    for index in range(len(position_list)):
+
+        if next_index > index:
+            index = next_index
+
+        #終了条件。もし調べた対象が「格」なら、そこで終了
+            if position_list[index].pos == "case": 
+                case_set.append(position_list[index])
+                #key = position_list[index].case
+                #case_set_dic.setdefault(key,case_set)
+                case_set = []
+
+                #継続して再帰する条件。調べた対象が「修飾語」なら、継続して再帰
+            if (position_list[index].pos) == "modi":
+
+                case_set.append(position_list[index].morpheme)
+                next_index = (position_list[index].dependency)
+
+    return set_list
 
     '''
     if not struc_dic["nor"] == []:
