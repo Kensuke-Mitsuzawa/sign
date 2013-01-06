@@ -18,7 +18,7 @@ def juman(word):
                             )
 
 
-    juman = subprocess.Popen(['/home/kensuke-mi/bin/juman'], 
+    juman = subprocess.Popen(['juman'], 
                              stdin=echo.stdout,
                              stdout=subprocess.PIPE,
                              )
@@ -27,8 +27,8 @@ def juman(word):
     end_of_pipe_tab = juman.stdout
 
     for result in end_of_pipe_tab:
-
         result_list = result.split()
+
 
         for detail in result_list:
             
@@ -247,7 +247,7 @@ def knp_tab(sentence):
                             )
 
 
-    juman = subprocess.Popen(['/home/kensuke-mi/bin/juman'], 
+    juman = subprocess.Popen(['juman'], 
                              stdin=echo.stdout,
                              stdout=subprocess.PIPE,
                              )
@@ -275,7 +275,7 @@ def knp_tab(sentence):
 
 if __name__ == '__main__':
 
-    sentence = "資料をファイルする。"
+    sentence = sys.argv[2]
     knp_tab(sentence)
     
          
