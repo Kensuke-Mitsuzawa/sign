@@ -4,7 +4,6 @@
 #------------------------------------------------------------
 # KNPの解析結果から述語と格の関係のみを抽出するスクリプト
 # 2012/12/31
-# 大幅に修正 2013/1/7
 #------------------------------------------------------------
 
 
@@ -143,7 +142,8 @@ def Syori(sentence):
                     format = case+" "+word_to_case+" "+category+" "+domain
                     print_list.append(format)
 
-    return print_list
+    print_format = "\t".join(print_list)
+    return print_format
 
 def clause_count(tmp_list):
 ## 節の数と各節が何行文の情報を持っているのか調べる関数    
@@ -212,18 +212,15 @@ def knp_tab(sentence):
     for line in end_of_pipe_tab:
 
         #print line
-       
+        Syori(line)
         line_split = line.split(" ")
         tmp_list.append(line_split[0])
         clause_list.append(line)
-        format_list = Syori(line)
-        if not format_list == []:
-            return format_list
-    
+        
     #ここで各処理関数に情報を投げる
     #clause_num, clause = clause_count(tmp_list)
     #Syori(clause_list,clause_num,clause)
-    
+
 
 if __name__ == '__main__':
 
@@ -231,27 +228,11 @@ if __name__ == '__main__':
     input_f = open("sentence-list",'r')
     sentence_list = input_f.readlines()
     for sentence in sentence_list:
-        sen_list = []
-        
-        sentence_l = sentence.split('\t')
-        sentence = sentence_l[2]
-        sentence = sentence.strip('\n')
-        for sen in sentence:
-            if not sen == " ":
-                sen_list.append(sen)
+        sentence = (sentence.split('\t'))[2]
+        #print "sentence is",sentence
+        knp_tab(sentence)
 
-            else:
-                pass
-        sentence = "".join(sen_list)
-
-        format = knp_tab(sentence)
-        format = "".join(format)
-        
-        out_format = sentence_l[0] + "\t" + sentence_l[1] + "\t" +sentence + "\t" + str(format) + "\n"
-
-        print out_format
-        output_f.writelines(out_format)
     
-    output_f.close()
+    
 
 
