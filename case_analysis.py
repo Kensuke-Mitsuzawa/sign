@@ -125,6 +125,7 @@ def Syori(sentence):
             case_relation_list = a_r.split(":")
             predicate = case_relation_list[1]
             print_list.append(predicate)
+            print_list.append(" ")
             
             case = case_relation_list[3]
             each_case_list = case.split(";")
