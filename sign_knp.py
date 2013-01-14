@@ -5,7 +5,6 @@
 import sys,codecs,subprocess,readline,re
 
 from types import *
-#sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
 
 ## 辞書の定義
 info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none","Modi":"none"}
@@ -231,7 +230,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 if not [] == re.findall(r"<体言止>",sentence):
                     tmp_dic["case_ana"] = re.findall(r"<体言止>",sentence)
             #--------------------------------------
-            #品詞情報（とはいってもposはcaseかmodiかどっちかだが）
+            #品詞情報（とはいってもposはcaseかmodiかpredictのどれか）
+            #品詞情報の登録処理の記述はこの関数内に散らばっている。
+            #現状のままでも動作には問題なさそうだけど、きたない
             if not re.findall(r"\+.*D",sentence) == []:
 
                 if not re.findall(r"解析格:.*",sentence) == []:
@@ -265,30 +266,57 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
             #何格か？どんな述語か？判別してinfo_dicのそれぞれの項目に登録
             if clause_info.case_analiyzed == "主題表現":
+                clause_info.case_analiyzed = "main"
                 info_dic["main"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:ガ>":
+                clause_info.case_analiyzed = "Ga"
                 info_dic["Ga"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:ヲ>":
+                clause_info.case_analiyzed = "Wo"
                 info_dic["Wo"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:ニ>":
+                clause_info.case_analiyzed = "Ni"
                 info_dic["Ni"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:へ>":
+                clause_info.case_analiyzed = "He"
                 info_dic["He"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:ト>":
+                clause_info.case_analiyzed = "To"
                 info_dic["To"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:カラ>":
+                clause_info.case_analiyzed = "Kara"
                 info_dic["Kara"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:ヨリ>":
+                clause_info.case_analiyzed = "Yori"
                 info_dic["Yori"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:デ>":
+                clause_info.case_analiyzed = "De"
                 info_dic["De"] = clause_info
+
             if clause_info.case_analiyzed == "<解析格:時間>":
+                clause_info.case_analiyzed = "Time"
                 info_dic["Time"] = clause_info
+
             if clause_info.case_analiyzed == "状態述語":
+                clause_info.case_analiyzed = "Predict"
+                clause_info.pos = "predict"
                 info_dic["Predict"] = clause_info
+
             if clause_info.case_analiyzed == "動態述語":
+                clause_info.case_analiyzed = "Predict"
+                clause_info.pos = "predict"
                 info_dic["Predict"] = clause_info
             if clause_info.case_analiyzed == "<体言止>":
+                clause_info.case_analiyzed = "Predict"
+                clause_info.pos = "predict"
                 info_dic["Predict"] = clause_info  
             #--------------------------------------
 
@@ -300,7 +328,119 @@ def Syori(clause_list,clause_num,clause,negative_choice):
     return info_dic,struc_dic
 
 
+def make_case_set(info_dic):
 
+    #stackは文中に存在する修飾語と格をとりあえず保存するリスト
+    stack = []
+    #case_set_listは修飾語と格の組を保存するリスト
+    case_set_list =[]
+    #checked_listは処理を終えた語を保存するリスト。whileの終了条件用に作成
+    checked_list = []
+    #index_listは入力文の語の並びを保存しておくリスト
+    index_list = []
+    #mod_index_listは修飾語のみを保存しておくリスト。（修飾語だけ先に処理したいから）
+    modi_index_list = []
+    #set_dicは修飾語と格のセットを保存する辞書。keyは格の名前or述語,valueがセット（リスト）
+    set_dic = {}
+
+    #add all words from info_dic to stack
+    for one in info_dic:
+        if not info_dic[one] == 'none':
+            stack.append(info_dic[one])
+            index_list.append(info_dic[one].order)
+            
+            if info_dic[one].pos == 'modi':
+                modi_index_list.append(info_dic[one].order)
+                #code for check
+                #print "modifier address in memory",info_dic[one]
+                #print "word for one is:",info_dic[one].morpheme
+                #print "dependency of it modi is:",info_dic[one].dependency
+    modi_index_list.sort()
+
+    #以下、コメントアウト中。上の記述で代用できている
+    """
+    for one in stack:
+        if one.pos == "modi":
+            modi_index_list.append(info_dic[one].order)
+            # code for check
+            print "modifier address in memory",one
+            print "word for one is:",one.morpheme
+            print "dependency of it modi is:",one.dependency
+    modi_index_list.sort()
+    """
+    print "modi_list is:",modi_index_list
+
+    #初回のみ修飾語のindex listであるmodi_index_listの一番最初を指定
+    next_w = modi_index_list[0]
+    
+    while not len(checked_list) == len(stack):
+        
+        for one in stack:
+            if next_w == one.order:
+                checking_word = one
+                break
+        
+        #-----------------------------------------------------------------
+        #code for check
+        #print "---------------------------------------"
+        #print "stack is",stack
+        #print index_list
+        #print "next_w is",next_w
+        #print "checking_word is",checking_word
+        #print "pos of above word is",checking_word.pos
+        #-----------------------------------------------------------------
+
+        if checking_word.pos == "modi":
+            #print "modi route is succeeful"
+            case_set_list.append(checking_word)
+            index_list.remove(next_w)
+            modi_index_list.remove(next_w)
+
+            next_w = checking_word.dependency
+            checked_list.append(checking_word)
+
+        if checking_word.pos == "case":
+            case_set_list.append(checking_word)
+            checked_list.append(checking_word)
+            index_list.remove(next_w)
+
+            case_name = checking_word.case_analiyzed
+
+            set_dic.setdefault(case_name,case_set_list)
+        
+            case_set_list = []
+            #もし、まだ修飾語リストが空でなかったら（他の格にかかる修飾語が存在する場合）
+            if not len(modi_index_list) == 0: 
+                next_w = modi_index_list[0]
+            else:
+                if not len(index_list) == 0:
+                    next_w = index_list[0]
+                else:
+                    pass
+                
+        if checking_word.pos == "predict":
+            case_set_list.append(checking_word)
+            checked_list.append(checking_word)
+            if next_w in index_list:
+                index_list.remove(next_w)
+
+            predict_name = checking_word.case_analiyzed
+            set_dic.setdefault(predict_name,case_set_list)
+
+            case_set_list = []
+            #もし、まだ修飾語リストが空でなかったら（他の格にかかる修飾語が存在する場合）
+            if not len(modi_index_list) == 0:
+                next_w = modi_index_list[0]
+            else:
+                if not len(index_list) == 0:
+                    next_w = index_list[0]
+                else:
+                    pass
+
+    print "set_dic is",set_dic
+    #return set_dic
+
+'''
 def reorder(info_dic,struc_dic):
     order_num_list = []
     order_list = []
@@ -428,7 +568,7 @@ def turn_modify(number,end_number,position_list):
 
     return set_list
 
-    '''
+
     if not struc_dic["nor"] == []:
         print info_dic["main"].morpheme,info_dic["Ga"].morpheme,info_dic["Predict"].morpheme
 
@@ -494,7 +634,7 @@ def knp_tab(sentence):
                             )
 
 
-    juman = subprocess.Popen(['/home/kensuke-mi/bin/juman'], 
+    juman = subprocess.Popen(['juman'], 
                              stdin=echo.stdout,
                              stdout=subprocess.PIPE,
                              )
@@ -518,8 +658,9 @@ def knp_tab(sentence):
     clause_num, clause = clause_count(tmp_list)
     negative_choice = negative(clause_list,clause_num,clause)
     info_dic,struc_dic = Syori(clause_list,clause_num,clause,negative_choice)
-    make_sentence(info_dic,struc_dic,negative_choice,clause_num)
-    reorder(info_dic,struc_dic)
+    make_case_set(info_dic)
+    #make_sentence(info_dic,struc_dic,negative_choice,clause_num)
+    #reorder(info_dic,struc_dic)
 
     print info_dic
     print struc_dic
