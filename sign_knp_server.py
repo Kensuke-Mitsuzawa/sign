@@ -54,9 +54,9 @@ def negative(clause_list,clause_num,clause):
             #+以降が単語に関する情報の（はず）なので、ここから情報を抽出する
             if not re.findall(r"\+.*D",sentence) == []:
                 if not re.findall(r"<否定表現>",sentence) == []:
-                    print "否定表現が見つかりました。どうするか考えてください。半角英数で打ち込んでネ☆\n１たたかう２にげる３ねる\n"
+                    #print "否定表現が見つかりました。どうするか考えてください。半角英数で打ち込んでネ☆\n１たたかう２にげる３ねる\n"
                     choice = raw_input("1 意思の否定 2 所有・存在の否定 3 完了の否定 4 不可能の意味 5 経験の否定 6 必要性の否定\n")
-
+                    choice = int(choice)
                     #眠いのでアレだが、いちいち文字で否定種類をわけるのはいかがなものかと。数字でわけてもいいんじゃね。
                     if choice == 1:
                         negative = "willness"
@@ -71,10 +71,9 @@ def negative(clause_list,clause_num,clause):
                     if choice == 6:
                         negative = "need"
 
-
             #否定表現がなかった時。つまり否定文じゃなかった時
-            else:
-                negative = ""
+            #else:
+            #    negative = ""
 
     #-------------------------------
     #単なる表示の都合上
@@ -87,7 +86,7 @@ def negative(clause_list,clause_num,clause):
 
 def Syori(clause_list,clause_num,clause,negative_choice):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
-    print "--------------------"
+    #print "--------------------"
 
     struc_dic = {"nor":[],"ques":[],"passive":[],"cause":[],"if":[],"force":[]}
 
@@ -216,7 +215,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
 
             #テスト用
-            print "".join(tmp_dic["morp"])
+            #print "".join(tmp_dic["morp"])
 
             #--------------------------------------
             #述語情報を拾う。述語になって欲しいところは<係:文末>になっているので、これを述語に置きかえる
@@ -322,9 +321,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
 
         #語の並び情報orderを＋１しておく
-        print "word position is",order
+        #print "word position is",order
         order += 1
-        print "----------------"
+        #print "----------------"
     return info_dic,struc_dic
 
 
@@ -371,7 +370,10 @@ def make_case_set(info_dic):
     #print "modi_list is:",modi_index_list
 
     #初回のみ修飾語のindex listであるmodi_index_listの一番最初を指定
-    next_w = modi_index_list[0]
+    if not len(modi_index_list) == 0:
+        next_w = modi_index_list[0]
+    else:
+        next_w = index_list[0]
     
     while not len(checked_list) == len(stack):
         
@@ -438,6 +440,52 @@ def make_case_set(info_dic):
                     pass
 
     return set_dic
+
+
+def add_negative(set_dic,negative):
+    predict_list = set_dic["Predict"]
+    
+    dep = 'n'
+    per='n'
+    pos='negative'
+    cat='n'
+    dom='n'
+    case='n'
+    case_ana='n'
+    order='n'
+
+    if negative == "willness":
+        reg = "ない（意思）"
+        morp = "ない（意思）"
+
+    if negative == "posess":
+        reg = "ない（両手）"
+        morp = "ない（両手）"
+
+    if negative == "perfect":
+        reg = "ない（未完了）"
+        morp = "ない（未完了）"
+
+    if negative == "impossible":
+        reg = "無理"
+        morp = "無理"
+
+    if negative == "experience":
+        reg = "。。。"
+        morp = "。。。"
+
+    if negative == "need":
+        reg = "不必要"
+        morp = "不必要"
+        
+    negative_info = info(dep,per,reg,morp,pos,cat,dom,case,case_ana,order)
+    predict_list.append(negative_info)
+    
+    set_dic["Predict"] = predict_list
+
+
+    return set_dic
+    
 
 '''
 def reorder(info_dic,struc_dic):
@@ -566,8 +614,10 @@ def turn_modify(number,end_number,position_list):
                 next_index = (position_list[index].dependency)
 
     return set_list
+    '''
 
 
+def make_sentence(set_dic,negative_choice):
     if not struc_dic["nor"] == []:
         print info_dic["main"].morpheme,info_dic["Ga"].morpheme,info_dic["Predict"].morpheme
 
@@ -579,7 +629,7 @@ def turn_modify(number,end_number,position_list):
 
     if not struc_dic["if"] == []:
         info_dic["main"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
-'''
+
 
 
 
@@ -648,7 +698,7 @@ def knp_tab(sentence):
     end_of_pipe_tab = knp.stdout
 
     for line in end_of_pipe_tab:
-        print line
+        #print line
         line_split = line.split(" ")
         tmp_list.append(line_split[0])
         clause_list.append(line)
@@ -658,9 +708,12 @@ def knp_tab(sentence):
     negative_choice = negative(clause_list,clause_num,clause)
     info_dic,struc_dic = Syori(clause_list,clause_num,clause,negative_choice)
     set_dic = make_case_set(info_dic)
+    if not negative_choice == "":
+        set_dic = add_negative(set_dic,negative_choice)
     #make_sentence(info_dic,struc_dic,negative_choice,clause_num)
     #reorder(info_dic,struc_dic)
 
+    print set_dic
     #print info_dic
     #print struc_dic
 
@@ -674,7 +727,7 @@ def knp_tree(sentence):
                             )
 
 
-    juman = subprocess.Popen(['/home/kensuke-mi/bin/juman'], 
+    juman = subprocess.Popen(['juman'], 
                              stdin=echo.stdout,
                              stdout=subprocess.PIPE,
                              )
@@ -698,7 +751,3 @@ if __name__ == '__main__':
 
     sentence = raw_input("文を入力してネ☆\n※必ず文末に読点かクエスチョンマークで終了してください。\n")
     info_dic,struc_dic = knp_tab(sentence)
-         
-
-
-
