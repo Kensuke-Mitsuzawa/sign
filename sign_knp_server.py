@@ -368,7 +368,7 @@ def make_case_set(info_dic):
             print "dependency of it modi is:",one.dependency
     modi_index_list.sort()
     """
-    print "modi_list is:",modi_index_list
+    #print "modi_list is:",modi_index_list
 
     #初回のみ修飾語のindex listであるmodi_index_listの一番最初を指定
     next_w = modi_index_list[0]
@@ -437,8 +437,7 @@ def make_case_set(info_dic):
                 else:
                     pass
 
-    print "set_dic is",set_dic
-    #return set_dic
+    return set_dic
 
 '''
 def reorder(info_dic,struc_dic):
@@ -658,12 +657,12 @@ def knp_tab(sentence):
     clause_num, clause = clause_count(tmp_list)
     negative_choice = negative(clause_list,clause_num,clause)
     info_dic,struc_dic = Syori(clause_list,clause_num,clause,negative_choice)
-    make_case_set(info_dic)
+    set_dic = make_case_set(info_dic)
     #make_sentence(info_dic,struc_dic,negative_choice,clause_num)
     #reorder(info_dic,struc_dic)
 
-    print info_dic
-    print struc_dic
+    #print info_dic
+    #print struc_dic
 
 
     return info_dic,struc_dic
