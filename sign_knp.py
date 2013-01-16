@@ -405,6 +405,8 @@ def make_case_set(info_dic):
             case_set_list.append(checking_word)
             checked_list.append(checking_word)
             index_list.remove(next_w)
+            #ここで、modifierとcaseの順番を逆にしておく
+            case_set_list.reverse()
 
             case_name = checking_word.case_analiyzed
 
@@ -617,21 +619,39 @@ def turn_modify(number,end_number,position_list):
     '''
 
 
-def make_sentence(set_dic,negative_choice):
+def make_sentence(set_dic,struc_dic):
+
+    morp = {}
+    
+    for one in set_dic:
+        instance = set_dic[one]
+        morp_list = []
+        for one_instance in instance:
+            morp_list.append(one_instance.morpheme)
+            morp_list.append(" ")
+            morp_seq = "".join(morp_list)
+            
+        morp.setdefault(one,morp_seq)
+ 
+    #--------------------------------------
+    #ここから手話の単語並び文に関する記述
+    print "Sign language word Sequence is"
+
+
     if not struc_dic["nor"] == []:
-        print info_dic["main"].morpheme,info_dic["Ga"].morpheme,info_dic["Predict"].morpheme
+        print morp["main"],morp["Ga"],morp["Predict"],"pt()"
 
     if not struc_dic["passive"] == []:
-        print info_dic["main"].morpheme, info_dic["Ni"].morpheme,info_dic["Predict"].morpheme,"pt()"
+        print morp["main"], morp["Ni"],morp["Predict"],"pt()"
 
     if not struc_dic["force"] == []:
-        print info_dic["main"].morpheme, info_dic["Ni"].morpheme, "pt() ",info_dic["Wo"].morpheme, info_dic["Predict"].morpheme,"+顎あげ ","わかる(+うなずき) ",info_dic["Wo"].morpheme, info_dic["Predict"].morpheme
+        print morp["main"], morp["Ni"], "pt() ",morp["Wo"], morp["Predict"],"+顎あげ ","わかる(+うなずき) ",morp["Wo"], morp["Predict"]
 
     if not struc_dic["if"] == []:
-        info_dic["main"].morpheme,info_dic["Ni"].morpheme,info_dic["Predict"].morpheme
+        morp["main"],morp["Ni"],morp["Predict"]
 
 
-
+     #--------------------------------------
 
 def clause_count(tmp_list):
 ## 節の数と各節が何行文の情報を持っているのか調べる関数    
@@ -710,12 +730,17 @@ def knp_tab(sentence):
     set_dic = make_case_set(info_dic)
     if not negative_choice == "":
         set_dic = add_negative(set_dic,negative_choice)
-    #make_sentence(info_dic,struc_dic,negative_choice,clause_num)
-    #reorder(info_dic,struc_dic)
+        
+    print "--------------------------"
+    print "About structure information"
+    print struc_dic
+    print "--------------------------"
 
-    print set_dic
+    make_sentence(set_dic,struc_dic)
+        
+    #print set_dic
     #print info_dic
-    #print struc_dic
+
 
 
     return info_dic,struc_dic
@@ -749,7 +774,7 @@ def knp_tree(sentence):
 
 if __name__ == '__main__':
 
-    sentence = raw_input("文を入力してネ☆\n※必ず文末に読点かクエスチョンマークで終了してください。\n")
+    sentence = raw_input("文を入力してネ☆\n※必ず文末に句点かクエスチョンマークで終了してください。\n")
     info_dic,struc_dic = knp_tab(sentence)
          
 
