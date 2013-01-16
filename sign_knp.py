@@ -89,7 +89,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
     #print "--------------------"
 
     struc_dic = {"nor":[],"ques":[],"passive":[],"cause":[],"if":[],"force":[]}
-    struc_dic["nor"] = []
+    struc_dic["nor"] = "OK"
 
     #カウンターの設置
     counter = 0
