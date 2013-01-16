@@ -89,6 +89,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
     #print "--------------------"
 
     struc_dic = {"nor":[],"ques":[],"passive":[],"cause":[],"if":[],"force":[]}
+    struc_dic["nor"] = []
 
     #カウンターの設置
     counter = 0
@@ -120,21 +121,22 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             #--------------------------------------
             #構文情報を拾う
             #構文情報は+のところに出現するので、ここでif文分岐する
+
             if not re.findall(r"\+.*D",sentence) == []:
                 #疑問文のとき（個人的には疑問文は？マークで判断してもよいとは思う）
                 if not re.findall(r"<モダリティ-疑問>",sentence) == []:
+                    struc_dic["nor"] = []
                     struc_dic["ques"] = "OK"
 
                 #受け身のとき
                 if not re.findall(r"<態:受動>",sentence) == []:
+                    struc_dic["nor"] = []
                     struc_dic["passive"] = "OK"
 
                 #使役文のとき
                 if not re.findall(r"<態:使役>",sentence) == []:
+                    struc_dic["nor"] = []
                     struc_dic["force"] = "OK"
-
-                else:
-                    struc_dic["nor"] = "OK"
             
             #--------------------------------------
             #かかりうけ情報
@@ -734,6 +736,9 @@ def knp_tab(sentence):
     print "--------------------------"
     print "About structure information"
     print struc_dic
+    print "--------------------------"
+    print "About case dictionary information"
+    print set_dic
     print "--------------------------"
 
     make_sentence(set_dic,struc_dic)
