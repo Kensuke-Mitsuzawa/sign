@@ -1,6 +1,13 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 
+#------------------------------------------------------------------------------------------------------------
+# module to detect negative information of KNP result. To detect negative information, regular expression is used
+# 
+#------------------------------------------------------------------------------------------------------------
+
+
+
 import re
 
 def find_negation(clause_list,clause_num,clause):

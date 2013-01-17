@@ -3,7 +3,7 @@
 
 
 import sys,codecs,subprocess,readline,re
-import negative
+import negative,make_sentence
 from types import *
 
 ## 辞書の定義
@@ -95,8 +95,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             '''
             #--------------------------------------
             #人称情報
-            if not re.findall(r".人称",sentence) == []:
-                tmp_dic["per"] = re.findall(".人称",sentence)
+            #if not re.findall(r".人称",sentence) == []:
+            #    tmp_dic["per"] = re.findall(".人称",sentence)
 
                             
             #--------------------------------------
@@ -152,9 +152,23 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                             morp_2 = reg_exp_list[1]
                             #とりあえず、漢字表記を形態素として登録する
                             tmp_dic["morp"] = [morp_1]
-            #--------------------------------------    
+            #--------------------------------------
+            #人称情報の取得　とりあえず、主題表現のときを対象に判断することに。でもガ格が主題やハ格が主題のときはどうするの？
+    
 
+            if not re.findall(r"\+.*D",sentence) == []:
+                if not re.findall(r"<主題表現>",sentence) == []:
+                    
+                    if not re.findall(r"私",sentence) == []:
+                        tmp_dic["per"] = 1
 
+                    if not re.findall(r"あなた",sentence) == []:
+                        tmp_dic["per"] = 2
+
+                    else:
+                        tmp_dic["per"] = 3
+
+            #--------------------------------------
             #テスト用
             #print "".join(tmp_dic["morp"])
 
@@ -181,9 +195,10 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             #--------------------------------------
 
             #infoクラスに情報を移していく
-            #tmp_dic["dep"]だけは中身がint型整数
+            #tmp_dic["dep"]とtmp_dic["per"]は中身がint型整数
             t_dep = tmp_dic["dep"]
-            t_per = "".join(tmp_dic["per"])
+            t_per = tmp_dic["per"]
+
             t_reg = "".join(tmp_dic["reg"])
             t_morp = "".join(tmp_dic["morp"])
             t_pos = "".join(tmp_dic["pos"])
@@ -559,41 +574,6 @@ def turn_modify(number,end_number,position_list):
     return set_list
     '''
 
-
-def make_sentence(set_dic,struc_dic):
-
-    morp = {}
-    
-    for one in set_dic:
-        instance = set_dic[one]
-        morp_list = []
-        for one_instance in instance:
-            morp_list.append(one_instance.morpheme)
-            morp_list.append(" ")
-            morp_seq = "".join(morp_list)
-            
-        morp.setdefault(one,morp_seq)
- 
-    #--------------------------------------
-    #ここから手話の単語並び文に関する記述
-    print "Sign language word Sequence is"
-
-
-    if not struc_dic["nor"] == []:
-        print morp["main"],morp["Ga"],morp["Predict"],"pt()"
-
-    if not struc_dic["passive"] == []:
-        print morp["main"], morp["Ni"],morp["Predict"],"pt()"
-
-    if not struc_dic["force"] == []:
-        print morp["main"], morp["Ni"], "pt() ",morp["Wo"], morp["Predict"],"+顎あげ ","わかる(+うなずき) ",morp["Wo"], morp["Predict"]
-
-    if not struc_dic["if"] == []:
-        morp["main"],morp["Ni"],morp["Predict"]
-
-
-     #--------------------------------------
-
 def clause_count(tmp_list):
 ## 節の数と各節が何行文の情報を持っているのか調べる関数    
 
@@ -687,7 +667,7 @@ def knp_tab(sentence):
     print set_dic
     print "--------------------------"
 
-    make_sentence(set_dic,struc_dic)
+    make_sentence.sentence_rule(set_dic,struc_dic)
         
     #print set_dic
     #print info_dic
@@ -695,32 +675,6 @@ def knp_tab(sentence):
 
 
     return info_dic,struc_dic
-
-def knp_tree(sentence):
-
-    echo = subprocess.Popen(['echo',sentence],
-                            stdout=subprocess.PIPE,
-                            )
-
-
-    juman = subprocess.Popen(['juman'], 
-                             stdin=echo.stdout,
-                             stdout=subprocess.PIPE,
-                             )
-
-
-    knp = subprocess.Popen(['knp','-case','-tree'],
-                           stdin = juman.stdout,
-                           stdout=subprocess.PIPE,
-                           )
-
-
-    end_of_pipe_tree = knp.stdout
-
-    for line in end_of_pipe_tree:
-        print line
-
-
 
 
 if __name__ == '__main__':
