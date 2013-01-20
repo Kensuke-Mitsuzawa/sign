@@ -158,14 +158,14 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
             if not re.findall(r"\+.*D",sentence) == []:
                 if not re.findall(r"<主題表現>",sentence) == []:
-                    
+
                     if not re.findall(r"私",sentence) == []:
                         tmp_dic["per"] = 1
 
                     if not re.findall(r"あなた",sentence) == []:
                         tmp_dic["per"] = 2
 
-                    else:
+                    if not tmp_dic["per"] == 1 and not tmp_dic["per"] == 2:
                         tmp_dic["per"] = 3
 
             #--------------------------------------
