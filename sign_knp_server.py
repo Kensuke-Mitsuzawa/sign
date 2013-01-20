@@ -3,7 +3,7 @@
 
 
 import sys,codecs,subprocess,readline,re
-
+import negative,make_sentence
 from types import *
 
 ## 辞書の定義
@@ -22,67 +22,6 @@ class info:
         self.case = case
         self.case_analiyzed = case_ana
         self.order = order
-
-def negative(clause_list,clause_num,clause):
-    #否定文に関する処理を行う
-    print "--------------------------"
-    print "About negative information\n"
-
-    #どの否定形か？を管理する変数
-    negative = ""
-    
-    #カウンターの設置
-    counter = 0
-    
-    #ここで新しい節を読みおなし
-    for value in clause:
-
-        if counter == 0:
-            start_pos = 1
-            end_pos = value
-
-        else:
-            start_pos = end_pos + 1
-            end_pos = end_pos + value
-
-        counter += 1
-
-        #情報の抽出を正規表現でしていく
-        for i in range(start_pos,end_pos + 1):
-            sentence = clause_list[i]
-            
-            #+以降が単語に関する情報の（はず）なので、ここから情報を抽出する
-            if not re.findall(r"\+.*D",sentence) == []:
-                if not re.findall(r"<否定表現>",sentence) == []:
-                    #print "否定表現が見つかりました。どうするか考えてください。半角英数で打ち込んでネ☆\n１たたかう２にげる３ねる\n"
-                    choice = raw_input("1 意思の否定 2 所有・存在の否定 3 完了の否定 4 不可能の意味 5 経験の否定 6 必要性の否定\n")
-                    choice = int(choice)
-                    #眠いのでアレだが、いちいち文字で否定種類をわけるのはいかがなものかと。数字でわけてもいいんじゃね。
-                    if choice == 1:
-                        negative = "willness"
-                    if choice == 2:
-                        negative = "posess"
-                    if choice == 3:
-                        negative = "perfect"
-                    if choice == 4:
-                        negative = "impossible"
-                    if choice == 5:
-                        negative = "experience"
-                    if choice == 6:
-                        negative = "need"
-
-            #否定表現がなかった時。つまり否定文じゃなかった時
-            #else:
-            #    negative = ""
-
-    #-------------------------------
-    #単なる表示の都合上
-    if not negative == "":
-        print negative,"is selected"
-    #-------------------------------
-                        
-    return negative
-
 
 def Syori(clause_list,clause_num,clause,negative_choice):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
@@ -156,8 +95,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             '''
             #--------------------------------------
             #人称情報
-            if not re.findall(r".人称",sentence) == []:
-                tmp_dic["per"] = re.findall(".人称",sentence)
+            #if not re.findall(r".人称",sentence) == []:
+            #    tmp_dic["per"] = re.findall(".人称",sentence)
 
                             
             #--------------------------------------
@@ -213,9 +152,23 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                             morp_2 = reg_exp_list[1]
                             #とりあえず、漢字表記を形態素として登録する
                             tmp_dic["morp"] = [morp_1]
-            #--------------------------------------    
+            #--------------------------------------
+            #人称情報の取得　とりあえず、主題表現のときを対象に判断することに。でもガ格が主題やハ格が主題のときはどうするの？
+    
 
+            if not re.findall(r"\+.*D",sentence) == []:
+                if not re.findall(r"<主題表現>",sentence) == []:
 
+                    if not re.findall(r"私",sentence) == []:
+                        tmp_dic["per"] = 1
+
+                    if not re.findall(r"あなた",sentence) == []:
+                        tmp_dic["per"] = 2
+
+                    if not tmp_dic["per"] == 1 and not tmp_dic["per"] == 2:
+                        tmp_dic["per"] = 3
+
+            #--------------------------------------
             #テスト用
             #print "".join(tmp_dic["morp"])
 
@@ -242,9 +195,10 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             #--------------------------------------
 
             #infoクラスに情報を移していく
-            #tmp_dic["dep"]だけは中身がint型整数
+            #tmp_dic["dep"]とtmp_dic["per"]は中身がint型整数
             t_dep = tmp_dic["dep"]
-            t_per = "".join(tmp_dic["per"])
+            t_per = tmp_dic["per"]
+
             t_reg = "".join(tmp_dic["reg"])
             t_morp = "".join(tmp_dic["morp"])
             t_pos = "".join(tmp_dic["pos"])
@@ -620,41 +574,6 @@ def turn_modify(number,end_number,position_list):
     return set_list
     '''
 
-
-def make_sentence(set_dic,struc_dic):
-
-    morp = {}
-    
-    for one in set_dic:
-        instance = set_dic[one]
-        morp_list = []
-        for one_instance in instance:
-            morp_list.append(one_instance.morpheme)
-            morp_list.append(" ")
-            morp_seq = "".join(morp_list)
-            
-        morp.setdefault(one,morp_seq)
- 
-    #--------------------------------------
-    #ここから手話の単語並び文に関する記述
-    print "Sign language word Sequence is"
-
-
-    if not struc_dic["nor"] == []:
-        print morp["main"],morp["Ga"],morp["Predict"],"pt()"
-
-    if not struc_dic["passive"] == []:
-        print morp["main"], morp["Ni"],morp["Predict"],"pt()"
-
-    if not struc_dic["force"] == []:
-        print morp["main"], morp["Ni"], "pt() ",morp["Wo"], morp["Predict"],"+顎あげ ","わかる(+うなずき) ",morp["Wo"], morp["Predict"]
-
-    if not struc_dic["if"] == []:
-        morp["main"],morp["Ni"],morp["Predict"]
-
-
-     #--------------------------------------
-
 def clause_count(tmp_list):
 ## 節の数と各節が何行文の情報を持っているのか調べる関数    
 
@@ -727,7 +646,14 @@ def knp_tab(sentence):
         
     #ここで各処理関数に情報を投げる
     clause_num, clause = clause_count(tmp_list)
-    negative_choice = negative(clause_list,clause_num,clause)
+    #returns 0 if not negation, returns 1 if negation
+    negative_value = negative.find_negation(clause_list,clause_num,clause)
+    
+    if negative_value == 0:
+        negative_choice = ""
+    else:
+        negative_choice = negative.negation(clause_list,clause_num,clause)
+
     info_dic,struc_dic = Syori(clause_list,clause_num,clause,negative_choice)
     set_dic = make_case_set(info_dic)
     if not negative_choice == "":
@@ -741,7 +667,7 @@ def knp_tab(sentence):
     print set_dic
     print "--------------------------"
 
-    make_sentence(set_dic,struc_dic)
+    make_sentence.sentence_rule(set_dic,struc_dic)
         
     #print set_dic
     #print info_dic
@@ -749,32 +675,6 @@ def knp_tab(sentence):
 
 
     return info_dic,struc_dic
-
-def knp_tree(sentence):
-
-    echo = subprocess.Popen(['echo',sentence],
-                            stdout=subprocess.PIPE,
-                            )
-
-
-    juman = subprocess.Popen(['juman'], 
-                             stdin=echo.stdout,
-                             stdout=subprocess.PIPE,
-                             )
-
-
-    knp = subprocess.Popen(['knp','-case','-tree'],
-                           stdin = juman.stdout,
-                           stdout=subprocess.PIPE,
-                           )
-
-
-    end_of_pipe_tree = knp.stdout
-
-    for line in end_of_pipe_tree:
-        print line
-
-
 
 
 if __name__ == '__main__':
