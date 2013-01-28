@@ -34,7 +34,7 @@ class morp:
 #基本句ごとの情報を格納する
 #c_infoクラスを継承する
 class info:
-    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,k_position,para_check,para_type,modify_type,modify_check,per,input_morp,reg_morp_form,pos,dom,cat):
+    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,input_morp,reg_morp_form,pos,dom,cat):
         
         self.c_dep = c_dependency
         self.c_position = c_position
@@ -52,6 +52,7 @@ class info:
         self.case_check = case_check
         self.predicate_check = predicate_check
         self.clause_type = clause_type
+        self.clause_func = clause_func
         self.k_position = k_position
         self.para_check = para_check
         self.para_type = para_type
@@ -139,7 +140,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
     #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
     #print "--------------------"
 
-    #関数の出力。入力文と同じ並び順にしている
+    #関数の出力となる配列。入力文と同じ並び順にしている
     out_list = []
 
     #カウンターの設置
@@ -150,7 +151,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
     #文節用の語の並び情報
     bnst_order = 0
-    
+
+    #--------------------------------------
     #ここで新しい節を読みおなし
     for value in clause:
 
@@ -173,15 +175,25 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
         #使用するハッシュマップは先にすべて定義しておく
         bnst_dic = {"dep":[],"position":[],"parallel_type":[],"parallel_p_num":[],"parallel_c_num":[],"c_clause_type":[]}
-        kihon_dic = {"dep":[],"predicate":[],"main_case":[],"tense":[],"case_relation":[],"kaiseki_case":[],"morp":[],"main":"","case_check":"","predicate_check":"","clause_type":[],"position":"","para_check":"","para_type":[],"modify_type":[],"modify_check":"","per":""}
+        kihon_dic = {"dep":[],"predicate":[],"main_case":[],"tense":[],"case_relation":[],"kaiseki_case":[],"morp":[],"main":"","case_check":"","predicate_check":"","clause_type":[],"position":"","para_check":"","para_type":[],"modify_type":[],"modify_check":"","per":"","clause_func":[]}
         morp_tmp_dic = {"input_morp":[],"reg_morp_form":[],"pos":[],"dom":[],"cat":[]}
         #形態素区別用のindex
         m_index = 0
 
+        #基本句の正規化表現を保存しておく変数（重要）
+        reg_marker = ""
+
+        #形態素解析の正規化表現を保存しておく変数（重要）
+        reg_marker_morp = ""
+
+        #--------------------------------------
+        #ここから*から*の範囲（文節の範囲）で情報を抽出していく
         #情報の抽出を正規表現でしていく
         for i in range(start_pos,end_pos + 1):
             sentence = clause_list[i]
 
+            #--------------------------------------
+            #文節の単位で情報の抽出
             if not re.findall(r"\*.*D|\*.*P",sentence) == []:
                 #--------------------------------------------------
                 #並列構造に関する記述
@@ -199,11 +211,13 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                     parallel_c_num = "".join((re.findall(r"<並結文節数:.*?>",sentence))).replace("<並結文節数:","").strip(">")
                     bnst_dic["parallel_c_num"] = parallel_c_num
 
+
                 if not re.findall(r"\* \dD|\* -\dD|\* \dP|\* -\dP",sentence) == []:
                     bnst_dependency = re.findall(r"\* \d|\* -\d",sentence)
                     bnst_dic["dep"] = int(("".join(bnst_dependency)).strip("* "))
                 
                 #--------------------------------------------------
+                #文節の系列に関する記述
                 bnst_dic["position"] = bnst_order
                 #--------------------------------------------------
                 #節の種類に関する記述
@@ -227,10 +241,11 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 clause_info = c_info(bnst_dic["dep"],bnst_dic["position"],bnst_dic["parallel_p_num"],bnst_dic["parallel_c_num"],bnst_dic["c_clause_type"])
 
                 """
+            #--------------------------------------
             #基本句単位での情報をパーズしていく
             if not re.findall(r"\+.*D|\+.*P",sentence) == []:
 
-                kihon_dic = {"dep":[],"predicate":[],"main_case":[],"tense":[],"case_relation":[],"kaiseki_case":[],"morp":[],"main":"","case_check":"","predicate_check":"","clause_type":[],"position":"","para_check":"","para_type":[],"modify_type":[],"modify_check":"","per":""}
+                kihon_dic = {"dep":[],"predicate":[],"main_case":[],"tense":[],"case_relation":[],"kaiseki_case":[],"morp":[],"main":"","case_check":"","predicate_check":"","clause_type":[],"position":"","para_check":"","para_type":[],"modify_type":[],"modify_check":"","per":"","clause_func":[]}
                 
                 #kihon_key_name = "kihon" + str(order)
                 kihon_key_name = "kihon"
@@ -322,6 +337,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 kihon_dic["modify_type"] = modify_type
                 
 
+                #節機能に関する記述
+                kihon_dic["clause_func"] = "".join(re.findall(r"<節機能-.*?>",sentence)).replace("<節機能-","").strip(">")
                 
                 #----------------------------------------------------
                 #パラメータが複数の状態を取りうるものは以下に記述
@@ -395,25 +412,24 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 if not reg_exp == []:
                     split_list = []
                     split_list = "".join(reg_exp).split("/")
+                    split_list[0] = (split_list[0]).replace("<正規化代表表記:","")
+                    split_list[1] = (split_list[1]).replace(">","")
                     kihon_dic["morp"] = split_list
                 
-
+                    #形態素。これを形態素の抽出部に渡す
+                    reg_marker = re.findall(r"(<正規化代表表記:.*?>)",sentence)
+                    
+                #--------------------------------------
                 #基本句単位でのかかりうけ情報を獲得
                 if not re.findall(r"\+ \dD|\+ -\dD|\+ \dP|\+ -\dP",sentence) == []:
                     kihon_dic["dep"] = re.findall(r"\+ \d|\+ -\d",sentence)
                     kihon_dic["dep"] = int(("".join(kihon_dic["dep"])).strip("+ "))
 
                 #--------------------------------------
-                
 
                 #文節単位のハッシュに基本句のハッシュマップを登録
                 bnst_dic.setdefault(kihon_key_name,kihon_dic)
 
-                
-
-                print '-----------------------------'
-                for one in kihon_dic:
-                    print one,kihon_dic[one]
             #--------------------------------------
             #形態素情報
             if re.findall(r"\+.*D|\+.*P",sentence) == [] and re.findall(r"\*.*D|\*.*P",sentence) == []:
@@ -426,6 +442,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 morp_tmp_dic["input_morp"] = m_tmp_list[0]
                 morp_tmp_dic["reg_morp_form"] = m_tmp_list[2]
                 morp_tmp_dic["pos"] = m_tmp_list[3]
+
+                reg_marker_morp = re.findall(r"(<正規化代表表記:.*?>)",sentence)
                 
                 morp_tmp_dic["dom"] = "".join(re.findall(r"<ドメイン:.*?>",sentence)).replace("<ドメイン:","").strip(">")
                 morp_tmp_dic["cat"] = "".join(re.findall(r"<カテゴリ:.*?>",sentence)).replace("<カテゴリ:","").strip(">")
@@ -438,48 +456,52 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             #あと修正ポイント、ここですべて統合したクラスに書き込んでいってもたぶん、うまくいく。形態素から文節までの構造はすべて、bnst_dicに集約されている
             #基本句と形態素は辞書のキー、固定してやる
             #冗長だが、一度ハッシュマップから変数に代入してから、インスタンスを作成（ぼくのわかりやすさ優先）
+            #基本句での正規化表現と形態素解析部の正規化単語が一致するときのみ、インスタンスを作成して、リストに登録する
+            #こうすると、スパースな情報が防げる
             #--------------------------------------------
-            #文節に関する情報
-            c_dependency = bnst_dic["dep"]
-            c_position = bnst_dic["position"]
-            parallel_p_num = bnst_dic["parallel_p_num"]
-            parallel_c_num = bnst_dic["parallel_c_num"]
-            c_clause_type = bnst_dic["c_clause_type"]
-            #--------------------------------------------
-            #基本句に関する情報
-            k_dependency = kihon_dic["dep"]
-            predicate = kihon_dic["predicate"]
-            main_case = kihon_dic["main_case"]
-            tense = kihon_dic["tense"]
-            case_relation = kihon_dic["case_relation"]
-            kaiseki_case = kihon_dic["kaiseki_case"]
-            morp = kihon_dic["morp"]
-            main = kihon_dic["main"]
-            case_check = kihon_dic["case_check"]
-            predicate_check = kihon_dic["predicate_check"]
-            clause_type = kihon_dic["clause_type"]
-            k_position = kihon_dic["position"]
-            para_check = kihon_dic["para_check"]
-            para_type = kihon_dic["para_type"]
-            modify_type = kihon_dic["modify_type"]
-            modify_check = kihon_dic["modify_check"]
-            per = kihon_dic["per"]
-            #--------------------------------------------
-            #形態素に関する情報
-            input_morp = morp_tmp_dic["input_morp"]
-            reg_morp_form = morp_tmp_dic["reg_morp_form"]
-            pos = morp_tmp_dic["pos"]
-            dom = morp_tmp_dic["dom"]
-            cat = morp_tmp_dic["cat"]
+            if not reg_marker == "" and not reg_marker_morp == "" and reg_marker == reg_marker_morp:
+                
 
-            #一応、ネーミングは形態素から文節まで。という意味
-            m_k_c_info = info(c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,k_position,para_check,para_type,modify_type,modify_check,per,input_morp,reg_morp_form,pos,dom,cat)
+                #文節に関する情報
+                c_dependency = bnst_dic["dep"]
+                c_position = bnst_dic["position"]
+                parallel_p_num = bnst_dic["parallel_p_num"]
+                parallel_c_num = bnst_dic["parallel_c_num"]
+                c_clause_type = bnst_dic["c_clause_type"]
+                #--------------------------------------------
+                #基本句に関する情報
+                k_dependency = kihon_dic["dep"]
+                predicate = kihon_dic["predicate"]
+                main_case = kihon_dic["main_case"]
+                tense = kihon_dic["tense"]
+                case_relation = kihon_dic["case_relation"]
+                kaiseki_case = kihon_dic["kaiseki_case"]
+                morp = kihon_dic["morp"]
+                main = kihon_dic["main"]
+                case_check = kihon_dic["case_check"]
+                predicate_check = kihon_dic["predicate_check"]
+                clause_type = kihon_dic["clause_type"]
+                clause_func = kihon_dic["clause_func"]
+                k_position = kihon_dic["position"]
+                para_check = kihon_dic["para_check"]
+                para_type = kihon_dic["para_type"]
+                modify_type = kihon_dic["modify_type"]
+                modify_check = kihon_dic["modify_check"]
+                per = kihon_dic["per"]
+                #--------------------------------------------
+                #形態素に関する情報
+                input_morp = morp_tmp_dic["input_morp"]
+                reg_morp_form = morp_tmp_dic["reg_morp_form"]
+                pos = morp_tmp_dic["pos"]
+                dom = morp_tmp_dic["dom"]
+                cat = morp_tmp_dic["cat"]
 
-            #クラスに移し替えたら、入力文の順にリストに追加していく...ただ、これだと形態素ごとにリストに追加されちゃうよなあ
-            out_list.append(m_k_c_info)
+                 #一応、ネーミングは形態素から文節まで。という意味
+                m_k_c_info = info(c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,input_morp,reg_morp_form,pos,dom,cat)
 
-            
-            
+                #クラスに移し替えたら、入力文の順にリストに追加していく
+                out_list.append(m_k_c_info)
+
             """
             以下、クラスをいじる時に使うだろうと（思われるメモ）
             morp_tmp_dic = {"input_morp":[],"reg_morp_form":[],"pos":[],"dom":[],"cat":[]}
@@ -494,18 +516,66 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         #語の並び情報orderを＋１しておく
         #print "word position is",order
         order += 1
-        print "----------------"
-        #for one in bnst_dic:
-        #    print one,bnst_dic[one]
-        print out_list
-        for one in out_list:
-            print one.input_morp
-        print "morpheme is:"
+        #*から*までの情報を抽出する（文節単位での情報を抽出する）for文はここでおしまい
+        #--------------------------------------
+    
+    #節ごとに切ってるfor文はここでおしまい
+    #--------------------------------------
+
+
+    #--------------------------------------
+    #ここから、出力チェック用の記述
+    print "About OutPut list"
+    print "Contents of list is:",out_list
+    for one in out_list:
+        print "---------------------------------------"
+        print "input_morpheme is:",one.input_morp
+        print "regular morpheme is:",one.reg_morp_form
+        print "tense is:",one.tense
+        print "bnst clause type is:",one.c_clause_type
+        print "kihon clause type is:",one,clause_type
+        print "kihon clause function is:",one.clause_func
+        print "mofifier or not:",one.modify_check
+        print "case or not:",one.case_check
+        print "main case is:",one.main_case
+        print "main:",one.main
+        print "predicate or not:",one.predicate_check
+        print "kaiseki case:",one.kaiseki_case
+        print "case relation is:",one.case_relation
+        for one_one in one.case_relation:
+            print one_one
+        print "para_check is:",one.para_check
+        print "para range(kihon pharase) is:",one.p_p_num
+        print "para range(clause) is:",one.p_c_num
+        print "para type is:",one.para_type
+    #--------------------------------------            
+
+    return out_list
+
+#入力文が複数節なのか？単節なのか？を判断する。返すのは二値。yes or no
+def clause_check(out_list):
+    #どうも節には主節、連用節、連体節があるくさいが、とりあえずは、主節 or notで判断してもいいだろう
+    main_c = ""
+    modi_c = ""
+    #返り値
+    multi_c = ""
+    
+    for one_p in out_list:
+        
+        if one_p.c_clause_type == "主節":
+            main_c = "yes"
+
+        if one_p.c_clause_type == "連用節" or one_p.c_clause_type == "連用節":
+            modi_c = "yes"
+
+    if main_c == "yes" and modi_c == "yes":
+        multi_c = "yes"
+
+    if main_c == "yes" and not modi_c == "yes":
+        multi_c = "no"
         
 
-
-            
-    return info_dic
+    return multi_c
 
 #修飾語と格の関係を構築する関数
 def make_case_set(info_dic):
@@ -742,6 +812,7 @@ def knp_tab(sentence):
         tmp_list.append(line_split[0])
         clause_list.append(line)
         
+    #--------------------------------------
     #ここで各処理関数に情報を投げる
     clause_num, clause = clause_count(tmp_list)
     #returns 0 if not negation, returns 1 if negation
@@ -752,8 +823,17 @@ def knp_tab(sentence):
     else:
         negative_choice = negative.negation(clause_list,clause_num,clause)
 
+    #文の構文に関する情報。返ってくるのはハッシュマップ
     struc_dic = structure_analyzer(clause_list,clause_num,clause)
-    info_dic = Syori(clause_list,clause_num,clause,negative_choice)
+    #文の情報を抽出。返ってくるのはリスト
+    out_list = Syori(clause_list,clause_num,clause,negative_choice)
+    #節が複数節なのか？単節なのか？を判断する。返ってくるのは二値。yes or no
+    clause_check_result = clause_check(out_list)
+
+
+    print "-----------------------------------"
+    print "Is clause multi or not?:",clause_check_result
+    
 
     '''
     set_dic = make_case_set(info_dic)
@@ -775,7 +855,7 @@ def knp_tab(sentence):
 
     '''
 
-    return info_dic,struc_dic
+    return out_list,struc_dic
 
 
 if __name__ == '__main__':
