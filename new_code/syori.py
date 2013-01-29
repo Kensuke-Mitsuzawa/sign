@@ -6,13 +6,15 @@ import re,string
 
 #基本句ごとの情報を格納する
 class info:
-    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,input_morp,reg_morp_form,pos,dom,cat):
+    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat):
         
         self.c_dep = c_dependency
         self.c_position = c_position
         self.p_p_num = parallel_p_num
         self.p_c_num = parallel_c_num
         self.c_clause_type = c_clause_type
+        self.c_counter = c_counter
+        self.c_kazu = c_kazu
         self.k_dep = k_dependency
         self.predicate = predicate
         self.main_case = main_case
@@ -31,6 +33,8 @@ class info:
         self.modify_type = modify_type
         self.modify_check = modify_check
         self.per = per
+        self.k_counter = k_counter
+        self.k_kazu = k_kazu
         self.input_morp = input_morp
         self.reg_morp_form = reg_morp_form
         self.pos = pos
@@ -74,7 +78,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         counter += 1
 
         #クラスと同じハッシュマップを先に定義しておく
-        bnst_dic = {"c_dep":[],"c_position":[],"parallel_type":[],"parallel_p_num":[],"parallel_c_num":[],"c_clause_type":[],"k_dep":[],"predicate":[],"main_case":[],"tense":[],"case_relation":[],"kaiseki_case":[],"morp":[],"main":"","case_check":"","predicate_check":"","clause_type":[],"k_position":"","para_check":"","para_type":[],"modify_type":[],"modify_check":"","per":"","clause_func":[],"input_morp":[],"reg_morp_form":[],"pos":[],"dom":[],"cat":[]}
+        bnst_dic = {"c_dep":[],"c_position":[],"parallel_type":[],"parallel_p_num":[],"parallel_c_num":[],"c_clause_type":[],"c_counter":"","c_kazu":"","k_dep":[],"predicate":[],"main_case":[],"tense":[],"case_relation":[],"kaiseki_case":[],"morp":[],"main":"","case_check":"","predicate_check":"","clause_type":[],"k_position":"","para_check":"","para_type":[],"modify_type":[],"modify_check":"","per":"","k_counter":"","k_kazu":"","clause_func":[],"input_morp":[],"reg_morp_form":[],"pos":[],"dom":[],"cat":[]}
         #形態素区別用のindex
         m_index = 0
 
@@ -128,6 +132,13 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                     c_clause_type = "".join(re.findall(r"<連体節>",sentence)).translate(string.maketrans("",""),"<>")
                      
                 bnst_dic["c_clause_type"] = c_clause_type
+
+                #--------------------------------------------------
+                #数量に関係する記述（基本句と共通）
+                bnst_dic["c_counter"] = "".join(re.findall(r"<カウンタ:.*?>",sentence)).replace("<カウンタ:","").strip(">")
+
+                if not re.findall(r"<数量>",sentence) == []:
+                    bnst_dic["c_kazu"] = "yes"
                 
                 #文節用の並び番号を＋１
                 bnst_order += 1
@@ -227,6 +238,14 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                     clause_type = "".join(re.findall(r"<連体節>",sentence)).translate(string.maketrans("",""),"<>")
                      
                 bnst_dic["clause_type"] = clause_type
+                #--------------------------------------------------
+                #数量に関係する記述（文節と共通）
+                bnst_dic["k_counter"] = "".join(re.findall(r"<カウンタ:.*?>",sentence)).replace("<カウンタ:","").strip(">")
+                
+                print bnst_dic["k_counter"]
+
+                if not re.findall(r"<数量>",sentence) == []:
+                    bnst_dic["k_kazu"] = "yes"
                 
                 
                 #----------------------------------------------------
@@ -377,15 +396,18 @@ def Syori(clause_list,clause_num,clause,negative_choice):
 
             #この状態で、文節から基本句（１つ）、形態素（基本句の正規化形態素に対応する形態素ひとつ）の情報をtmp_dic_listに格納できるはず
 
-            print '---------------------'
+                print '---------------------'
 
-            if not reg_marker_morp == "" and not reg_marker == "" and reg_marker_morp == reg_marker:
-                print 'same!'
+                print 'sentence is:',sentence
                 print bnst_dic["input_morp"]
                 print "reg_marker_morp","".join(reg_marker_morp)
                 print "reg_marker","".join(reg_marker)
-                print bnst_dic["k_position"]
+                print "position",bnst_dic["k_position"]
                 tmp_dic_list.append(bnst_dic)
+
+                print "element 0 in list:",(tmp_dic_list[0])["input_morp"]
+                print "num of element",len(tmp_dic_list)
+                
                 reg_marker = ""
                 reg_marker_morp = ""
                 
@@ -481,6 +503,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         parallel_p_num = bnst_dic["parallel_p_num"]
         parallel_c_num = one_dic["parallel_c_num"]
         c_clause_type = one_dic["c_clause_type"]
+        c_counter = one_dic["c_counter"]
+        c_kazu = one_dic["c_kazu"]
         #--------------------------------------------
         #基本句に関する情報
         k_dependency = one_dic["k_dep"]
@@ -501,6 +525,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         modify_type = one_dic["modify_type"]
         modify_check = one_dic["modify_check"]
         per = one_dic["per"]
+        k_counter = one_dic["k_counter"]
+        k_kazu = one_dic["k_kazu"]
         #--------------------------------------------
         #形態素に関する情報
         input_morp = one_dic["input_morp"]
@@ -513,7 +539,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         
 
         #一応、ネーミングは形態素から文節まで。という意味
-        m_k_c_info = info(c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,input_morp,reg_morp_form,pos,dom,cat)
+        m_k_c_info = info(c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat)
 
         #クラスに移し替えたら、入力文の順にリストに追加していく
         out_list.append(m_k_c_info)
@@ -550,6 +576,8 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         print "para range(kihon pharase) is:",one.p_p_num
         print "para range(clause) is:",one.p_c_num
         print "para type is:",one.para_type
+        print "counter check(kihon)",one.k_kazu
+        print "counter type(kihon)",one.k_counter
     #--------------------------------------            
 
     return out_list
