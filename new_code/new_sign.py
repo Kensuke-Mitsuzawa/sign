@@ -309,7 +309,7 @@ def knp_tab(sentence):
                             )
 
 
-    juman = subprocess.Popen(['juman'], 
+    juman = subprocess.Popen(['/home/kensuke-mi/bin/juman'], 
                              stdin=echo.stdout,
                              stdout=subprocess.PIPE,
                              )

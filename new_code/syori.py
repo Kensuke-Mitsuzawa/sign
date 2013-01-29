@@ -403,7 +403,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 print "reg_marker_morp","".join(reg_marker_morp)
                 print "reg_marker","".join(reg_marker)
                 print "position",bnst_dic["k_position"]
-                tmp_dic_list.append(bnst_dic)
+
+                a = dict(bnst_dic)
+                tmp_dic_list.append(a)
 
                 print "element 0 in list:",(tmp_dic_list[0])["input_morp"]
                 print "num of element",len(tmp_dic_list)
