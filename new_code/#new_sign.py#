@@ -90,6 +90,10 @@ def clause_check(out_list):
 
     return multi_c
 
+
+def make_clause_set():
+    pass
+
 #修飾語と格の関係を構築する関数
 def make_case_set(info_dic):
 
