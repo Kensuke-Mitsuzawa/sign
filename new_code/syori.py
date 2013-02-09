@@ -4,9 +4,12 @@
 
 import re,string
 
-#基本句ごとの情報を格納する
 class info:
     def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat):
+        """
+        文節、基本句、形態素の情報が格納されている
+        基本句ごとの情報を格納する
+        """
         
         self.c_dep = c_dependency
         self.c_position = c_position
@@ -42,7 +45,10 @@ class info:
         self.cat = cat
 
 def Syori(clause_list,clause_num,clause,negative_choice):
-    #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
+    """
+    clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
+    
+    """
     #print "--------------------"
 
     #関数の出力となる配列。入力文と同じ並び順にしている
@@ -107,7 +113,6 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                     #並列の句がいくつ続いているのか？
                     parallel_p_num = "".join((re.findall(r"<並結句数:.*?>",sentence))).replace("<並結句数:","").strip(">")
                     bnst_dic["parallel_p_num"] = parallel_p_num
-
 
                     #並列の文節がいくつ続いているのか？
                     parallel_c_num = "".join((re.findall(r"<並結文節数:.*?>",sentence))).replace("<並結文節数:","").strip(">")
@@ -241,8 +246,6 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 #--------------------------------------------------
                 #数量に関係する記述（文節と共通）
                 bnst_dic["k_counter"] = "".join(re.findall(r"<カウンタ:.*?>",sentence)).replace("<カウンタ:","").strip(">")
-                
-                print bnst_dic["k_counter"]
 
                 if not re.findall(r"<数量>",sentence) == []:
                     bnst_dic["k_kazu"] = "yes"
@@ -337,9 +340,6 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 #品詞については述語の箇所で記述しているので省略
                 #用言か体言かは述語の箇所で記述しているので省略
 
-
-
-
                 #--------------------------------------
                 #正規化表記を拾う
                 reg_exp = re.findall(r"(<正規化代表表記:.*?>)",sentence)
@@ -395,21 +395,21 @@ def Syori(clause_list,clause_num,clause,negative_choice):
                 
 
             #この状態で、文節から基本句（１つ）、形態素（基本句の正規化形態素に対応する形態素ひとつ）の情報をtmp_dic_listに格納できるはず
+            """
+            この部分はチェック用に書いただけ
+            print '---------------------'
+            print 'sentence is:',sentence
+            print bnst_dic["input_morp"]
+            print "reg_marker_morp","".join(reg_marker_morp)
+            print "reg_marker","".join(reg_marker)
+            print "position",bnst_dic["k_position"]
+            """
 
-                print '---------------------'
+            if reg_marker == reg_marker_morp and not reg_marker == "" and not reg_marker_morp == "":
 
-                print 'sentence is:',sentence
-                print bnst_dic["input_morp"]
-                print "reg_marker_morp","".join(reg_marker_morp)
-                print "reg_marker","".join(reg_marker)
-                print "position",bnst_dic["k_position"]
-
+                #直接、配列tmp_dic_listに追加をすると、問題が生じる。一度、aという辞書にしてやることで、この問題は解決できる
                 a = dict(bnst_dic)
                 tmp_dic_list.append(a)
-
-                print "element 0 in list:",(tmp_dic_list[0])["input_morp"]
-                print "num of element",len(tmp_dic_list)
-                
                 reg_marker = ""
                 reg_marker_morp = ""
                 
@@ -495,14 +495,10 @@ def Syori(clause_list,clause_num,clause,negative_choice):
     #文節と基本句に関する情報をインスタンスに移していく
     #文節に関する情報
 
-    print '0 number',(tmp_dic_list[0])["input_morp"]
-
-
-
     for one_dic in tmp_dic_list:
         c_dependency = one_dic["c_dep"]
         c_position = one_dic["c_position"]
-        parallel_p_num = bnst_dic["parallel_p_num"]
+        parallel_p_num = one_dic["parallel_p_num"]
         parallel_c_num = one_dic["parallel_c_num"]
         c_clause_type = one_dic["c_clause_type"]
         c_counter = one_dic["c_counter"]
@@ -533,13 +529,10 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         #形態素に関する情報
         input_morp = one_dic["input_morp"]
         reg_morp_form = one_dic["reg_morp_form"]
-        print one_dic["input_morp"]
-        
         pos = one_dic["pos"]
         dom = one_dic["dom"]
         cat = one_dic["cat"]
         
-
         #一応、ネーミングは形態素から文節まで。という意味
         m_k_c_info = info(c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat)
 
@@ -576,7 +569,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
             print one_one
         print "para_check is:",one.para_check
         print "para range(kihon pharase) is:",one.p_p_num
-        print "para range(clause) is:",one.p_c_num
+        print "para range(clause) is \n*note* includes this node and dependent node:",one.p_c_num
         print "para type is:",one.para_type
         print "counter check(kihon)",one.k_kazu
         print "counter type(kihon)",one.k_counter
