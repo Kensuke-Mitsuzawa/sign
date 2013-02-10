@@ -3,7 +3,7 @@
 
 
 import sys,codecs,subprocess,readline,re,string
-import negative,make_sentence,syori,struc_analyze,parallel
+import negative,make_sentence,syori,struc_analyze,parallel,modifier
 from types import *
 
 ## 辞書の定義
@@ -399,6 +399,9 @@ def knp_tab(sentence):
         out_list = make_clause_set(out_list)
     print "======================================="
     out_list = parallel.heiretsu(out_list)
+
+    print "======================================="
+    out_list =  modifier.modi(out_list)
 
     print "======================================="
     print out_list
