@@ -85,7 +85,7 @@ def modi_list(out_list):
                 if two_dim.modify_check == "yes" and two_dim.predicate_check == "yes" and not two_dim.case_check == "yes":
                     case_set_list.append(two_dim)
                     exist_modi = "yes"
-                
+                    continue
 
                 if two_dim.case_check == "yes" and exist_modi == "yes" and not para_case == "yes":
                     """
@@ -98,9 +98,12 @@ def modi_list(out_list):
                     for_two_dim_list.append(case_set_list)
                     case_set_list = []
                     exist_modi = "no"
+                    continue
+
 
                 else:
                     for_two_dim_list.append(two_dim)
+                    continue
                     
             if isinstance(two_dim,list):
                 """

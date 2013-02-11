@@ -398,6 +398,8 @@ def knp_tab(sentence):
     if clause_check_result == "no":
         out_list = make_clause_set(out_list)
     print "======================================="
+    print "result of make clause:",out_list
+    print "======================================="
     out_list = parallel.heiretsu(out_list)
 
     print "======================================="
