@@ -201,7 +201,7 @@ def modi_list(out_list):
                     for_para_list = []
                     case_set_list = []
                     para_case = "no"
-
+                    
                 else:
                     for_two_dim_list.append(for_para_list)
                     for_para_list = []

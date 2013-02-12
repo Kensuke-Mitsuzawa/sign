@@ -552,6 +552,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         print "---------------------------------------"
         print "input_morpheme is:",one.input_morp
         print "regular morpheme is:",one.reg_morp_form
+        print "pos is:",one.pos
         print "tense is:",one.tense
         print "bnst clause type is:",one.c_clause_type
         print "kihon clause type is:",one.clause_type

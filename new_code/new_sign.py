@@ -3,7 +3,7 @@
 
 
 import sys,codecs,subprocess,readline,re,string
-import negative,make_sentence,syori,struc_analyze,parallel,modifier
+import negative,make_sentence,syori,struc_analyze,parallel,modifier,make_clause
 from types import *
 
 ## 辞書の定義
@@ -67,76 +67,6 @@ class info:
         self.pos = pos
         self.dom = dom
         self.cat = cat
-
-
-#入力文が複数節なのか？単節なのか？を判断する。返すのは二値。yes or no
-def clause_check(out_list):
-    #どうも節には主節、連用節、連体節があるくさいが、とりあえずは、主節 or notで判断してもいいだろう
-    main_c = ""
-    sub_c = ""
-    #返り値
-    multi_c = ""
-    
-    for one_p in out_list:
-        
-        if one_p.c_clause_type == "主節":
-            main_c = "yes"
-
-        #ちょっと条件が特殊。連用節か連体節　かつ　not　修飾語　を満たす時、sub節と見なす。
-        if (one_p.c_clause_type == "連用節"  or one_p.c_clause_type == "連用節") and not one_p.modify_check == "yes":
-            sub_c = "yes"
-
-    if main_c == "yes" and sub_c == "yes":
-        multi_c = "yes"
-
-    if main_c == "yes" and not sub_c == "yes":
-        multi_c = "no"
-        
-
-    return multi_c
-
-
-#複数の節があるときに、まとめあげる関数
-def make_clause_set(input_list):
-    
-    #一時的なリスト
-    tmp_list = []
-    
-    #文全体のリスト
-    sentence_list = []
-
-    for one_node in input_list:
-    
-        if one_node.c_clause_type == "連用節" and not one_node.modify_check == "yes":
-           
-            tmp_list.append(one_node)
-            sentence_list.append(tmp_list)
-            #一時リストを再初期化
-            tmp_list = []
-            continue     
-
-        if one_node.c_clause_type == "連体節" and not one_node.modify_check == "yes":
-    
-            tmp_list.append(one_node)
-            sentence_list.append(tmp_list)
-            #一時リストを再初期化
-            tmp_list = []
-            continue
-            
-        if one_node.c_clause_type == "主節":
-            tmp_list.append(one_node)
-            sentence_list.append(tmp_list)
-            #一時リストを再初期化
-            tmp_list = []
-            continue
-
-        else:
-            tmp_list.append(one_node)
-            continue
-
-
-    return sentence_list
-
 
 #修飾語と格の関係を構築する関数
 def make_case_set(info_dic):
@@ -389,24 +319,28 @@ def knp_tab(sentence):
     #文の情報を抽出。返ってくるのはリスト
     out_list = syori.Syori(clause_list,clause_num,clause,negative_choice)
     #節が複数節なのか？単節なのか？を判断する。返ってくるのは二値。yes or no
-    clause_check_result = clause_check(out_list)
+    clause_check_result = make_clause.clause_check(out_list)
     
     #そもそもif分けする必要はどこにもないので、そのうち修正すること
     if clause_check_result == "yes":
-        out_list = make_clause_set(out_list)
+        out_list = make_clause.make_clause_set(out_list)
     #別に記述せんでもいいが、明文化しておけばわかりやすいじゃん
     if clause_check_result == "no":
-        out_list = make_clause_set(out_list)
+        out_list = make_clause.make_clause_set(out_list)
     print "======================================="
     print "result of make clause:",out_list
     print "======================================="
-    out_list = parallel.heiretsu(out_list)
+    out_list,orig_index_list = parallel.heiretsu(out_list)
 
     print "======================================="
-    out_list =  modifier.modi(out_list)
+    #out_list =  modifier.modi(out_list)
 
     print "======================================="
-    print out_list
+    print "after make modifier list:",out_list
+    print "======================================="
+    print "structure information is:",struc_dic
+    print "======================================="
+    #out_list = parallel.c_heiretsu(out_list)
 
 
 
