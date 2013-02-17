@@ -333,10 +333,10 @@ def knp_tab(sentence):
     out_list,orig_index_list = parallel.heiretsu(out_list)
 
     print "======================================="
-    #out_list =  modifier.modi(out_list)
+    modifier.modi(out_list,orig_index_list)
 
     print "======================================="
-    print "after make modifier list:",out_list
+    #print "after make modifier list:",out_list
     print "======================================="
     print "structure information is:",struc_dic
     print "======================================="
