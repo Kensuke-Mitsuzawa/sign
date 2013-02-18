@@ -117,119 +117,18 @@ def modi(out_list,orig_index_list):
     #一次元目の展開終了（一番上のforの終了）
     #------------------------------------------------------
         
-    if clause_count >= 1:
+    if clause_count >= 2:
         """
         もし、節が２つの構造だったら、後で別の処理をさせたい。
         だからチェックを入れておく
         """
         multi_clause = "yes"
 
-    if multi_clause == "no":
-        out_list,orig_index_list = make_modi_set(out_list,orig_index_list,modi_index_list)
-    else:
-        out_list,orig_index_list = multi_modi_set(out_list,orig_index_list,modi_index_list)
+    out_list,orig_index_list = make_modi_set(out_list,orig_index_list,modi_index_list,multi_clause)
 
     return out_list,orig_index_list
 
-def multi_modi_set(out_list,orig_index_list,modi_index_list):
-    """
-    ちょっと特殊な時に該当
-    if文とか、（原因ー結果）文とか節が２つの構造になってしまう時はちょっと処理を変えないといけないので、この関数を呼び出す
-    やっていることは基本的に一緒
 
-    まだやっていないこと
-    １　initial_modi_checkがnoの時の記述
-    ２　節の中に並列が存在している場合（つまりさらにリストが内側に存在する場合）の記述
-    """
-
-    print "係り受け先リストは:",modi_index_list
-    
-    modi_set_list_orig = []
-    modi_set_list = []
-    initial_modi_check = "yes"
-
-    #------------------------------------------------------
-    #一次元目の展開
-    for one_dim_i in range(len(modi_index_list)):
-        #------------------------------------------------------
-        #二次元目の展開
-        for two_dim_i in range(len(modi_index_list[one_dim_i])):
-            if not modi_index_list[one_dim_i][two_dim_i] == 0:
-                
-                now_index = two_dim_i
-                next_dep_number = modi_index_list[one_dim_i][two_dim_i+1]
-
-                #------------------------------------------------------
-                #initial_modi_checkがno,つまり連続修飾語の中間
-                if initial_modi_check == "no":
-                    """
-                    まだ面倒で中身を記述していない
-                    """
-
-
-
-                    continue
-                #initial_modi_check=noのときはここまで
-                #------------------------------------------------------
-
-
-                #------------------------------------------------------
-                #修飾語句の固まりの最初のとき
-                if initial_modi_check == "yes":
-
-                    initial_modi_check = "no"
-
-                    initial_modi_i = two_dim_i
-                    
-                    for orig_one_dim_i in range(len(orig_index_list)):
-                        try:        
-                            orig_index = orig_index_list[orig_one_dim_i].index(modi_index_list[one_dim_i][two_dim_i])
-                            modi_set_list_orig.append(orig_index_list[one_dim_i][two_dim_i])
-                            modi_set_list_orig.append(orig_index_list[orig_one_dim_i][orig_index])
-
-                            print modi_set_list_orig
-
-                            modi_set_list.append(out_list[one_dim_i][two_dim_i])
-                            modi_set_list.append(out_list[orig_one_dim_i][orig_index])
-
-                            print modi_set_list
-
-                        except ValueError:
-                            continue
-                        
-                    #ここでは意図的にifのcontinueを記述しない
-                #initial_modi_checkがyesのときはここまで
-                #------------------------------------------------------
-
-                #------------------------------------------------------
-                #終了条件,次に係り受けをもっていない（つまり、修飾語句固まりの最終）
-                if next_dep_number == 0:
-                    
-                    initial_modi_check = "yes"
-
-                    orig_index_list[one_dim_i][initial_modi_i] = modi_set_list_orig
-                    out_list[one_dim_i][initial_modi_i] = modi_set_list
-                    
-                    for delete_num in modi_set_list_orig:
-                        try:
-                            orig_index_list[one_dim_i].remove(delete_num)
-                        except ValueError:
-                            continue
-                    
-                    for delete_ins in modi_set_list:
-                        try:
-                            out_list[one_dim_i].remove(delete_ins)
-                        except ValueError:
-                            continue
-                #終了条件の最後
-                #------------------------------------------------------
-
-        #二次元目の展開ここまで
-        #------------------------------------------------------
-    #一次元目展開ここまで
-    #------------------------------------------------------
-
-    return out_list,orig_index_list
 
 def paralist_error(dep_in_paralist_error,dep_num_paralist_error,initial_modi_i,orig_index_list,out_list,modi_set_list_orig,modi_set_list,para_list_orig,para_list,dep_ins_paralist_error):
     """
@@ -315,7 +214,7 @@ def paralist_error(dep_in_paralist_error,dep_num_paralist_error,initial_modi_i,o
 
 
 
-def make_modi_set(out_list,orig_index_list,modi_index_list):
+def make_modi_set(out_list,orig_index_list,modi_index_list,multi_clause):
         
     print "修飾係り受け先リスト:",modi_index_list
     print "現在のindexリスト:",orig_index_list

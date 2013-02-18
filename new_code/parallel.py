@@ -1,6 +1,73 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
+def check_clause(out_list):
+    """
+    out_listをいったん調査してみて、節機能があるか調べる
+    節機能があれば、Trueを返す
+    なければFalseを返す
+    """
+    clause_func = ""
+    
+    for one_dim_i in range(len(out_list)):
+        for two_dim_i in range(len(out_list[one_dim_i])):
+            """
+            もしあした雨が降ったら、あしたの遠足は延期です。
+            の例文の時にはpara_checkは入らない。その代わりにclause_funcの項目が何かしろの機能が表示される。
+            なので、これをマーカーにする。
+            """
+            try:
+                if not(out_list[one_dim_i][two_dim_i]).clause_func == "":
+                    clause_func =  (out_list[one_dim_i][two_dim_i]).clause_func
+            except AttributeError:
+                continue
+
+    if not clause_func == "":
+        return "T"
+
+    else:
+        return "F"
+
+def clause_func(out_list):
+    """
+    check_clauseで節機能が検知された場合のみに実行される。
+    Input:out_list
+    Output:節機能にあったNMSをつけたout_list
+    """
+    for one_dim_i in range(len(out_list)):
+        for two_dim_i in range(len(out_list[one_dim_i])):
+            """
+            もしあした雨が降ったら、あしたの遠足は延期です。
+            の例文の時にはpara_checkは入らない。その代わりにclause_funcの項目が何かしろの機能が表示される。
+            なので、これをマーカーにする。
+            """
+            clause_func = ""
+
+            try:
+                clause_func =  (out_list[one_dim_i][two_dim_i]).clause_func
+            except AttributeError:
+                continue
+            #------------------------------------------------------
+            #節機能が見つかったインスタンスのみif以下の処理    
+            if not clause_func == "":
+                """
+                以下、NMSをルールで記述する
+
+                """
+                print clause_func 
+
+                if clause_func == "条件":
+                    #記号を忘れたので、とりあえず条件とか書いておく
+                    out_list[one_dim_i][two_dim_i].nms == "条件"
+
+                if clause_func == "理由":
+                    out_list[one_dim_i][two_dim_i].nms == "理由"
+
+            #節機能が見つかったときの処理はここまで
+            #------------------------------------------------------
+            
+
+
 def c_heiretsu(out_list):
     """
     次やるべきこと:二次元目にリストがある場合の記述
@@ -11,36 +78,56 @@ def c_heiretsu(out_list):
     out = []
     c_para_list = []
     tmp_para_list = []
+    
+    const = 0
 
-    for one_dim in out_list:
-        if not isinstance(one_dim[-1],list):
-            """
-            二次元目にインスタンスがある場合　かつ
-            二次元目の最後はリストでない場合（つまりインスタンスの場合）
+    check_result = check_clause(out_list)
 
+    print check_result
+    if check_result == "T":
+        clause_func(out_list)
 
-            最後のインスタンスを確認して、並列　かつ　並列基本句数０のとき（この時、節の並列と思われる）のときに限り、リストを展開
-            次の節のために、c_para_checkをyesにする
-            また、関数の返り値の制御のためにc_para_flagもyesにする
-            
-            次の節はc_para_checkがイエスの時に限り、節並列リストに加える操作をする
-            """
-            if (one_dim[-1]).para_check == "yes" and (one_dim[-1]).p_p_num == "":
-                """
-                節接続のNMSを入れるのなら、この-1のインスタンスを見て判断
-                """
+    if check_result == "F":
+        pass
+    
                 
 
-                for two_dim in one_dim:
-                    tmp_para_list.append(two_dim)
+
+
+def __c_heiretsu__():
+    """
+    ルールを書いた意味がよくわからなくなったので、別の関数として保存しておく
+    処理を書いてたときに頭にウジでもわいていたのではないだろうか（本人談）
+
+    """
+        
+    if not isinstance(one_dim[-1],list):
+        """
+        二次元目にインスタンスがある場合　かつ
+        二次元目の最後はリストでない場合（つまりインスタンスの場合）
+        
+        
+        最後のインスタンスを確認して、並列　かつ　並列基本句数０のとき（この時、節の並列と思われる）のときに限り、リストを展開
+        次の節のために、c_para_checkをyesにする
+        また、関数の返り値の制御のためにc_para_flagもyesにする
+        
+        次の節はc_para_checkがイエスの時に限り、節並列リストに加える操作をする
+        """
+        if (one_dim[-1]).para_check == "yes" and (one_dim[-1]).p_p_num == "":
+            """
+            節接続のNMSを入れるのなら、この-1のインスタンスを見て判断
+            """
+            
+            for two_dim in one_dim:
+                tmp_para_list.append(two_dim)
                 c_para_check = "yes"
                 c_para_list.append(tmp_para_list)
                 tmp_para_list = []
                 c_para_flag = "yes"
                 continue
-            
-            if c_para_check == "yes":
                 
+            if c_para_check == "yes":
+                    
                 for two_dim in one_dim:
                     tmp_para_list.append(two_dim)
                 c_para_list.append(tmp_para_list)
@@ -48,28 +135,31 @@ def c_heiretsu(out_list):
                 out.append(c_para_list)
                 c_para_list = []
                 c_para_check = "no"
-                continue
-        if isinstance(one_dim[-1],list):
-            """
-            二次元目の最後がインスタンスでない場合
-            ex.述語が並列になっている（並列リスト）
 
-            基本的にやっていることは二次元の時と同じ
-            """
-            for two_dim in one_dim:
-                if isinstance(two_dim,list):
-                    if (two_dim[-1]).para_check == "yes" and (two_dim[-1]).p_p_num == "":
-                        """
-                        節接続のNMSを入れるのなら、この-1のインスタンスを見て判断
-                        """
-                        for three_dim in two_dim:
-                            tmp_para_list.append(three_dim)
-                        c_para_check == "yes"
-                        c_para_list.append(tmp_para_list)
-                        tmp_para_list = []
-                        c_para_flag = "yes"
-                        continue
+                #ほんとはここにcontinueがあったけど、整理中に消してしまいました
+    if isinstance(one_dim[-1],list):
+        """
+        二次元目の最後がインスタンスでない場合
+        ex.述語が並列になっている（並列リスト）
+        
+        基本的にやっていることは二次元の時と同じ
+        """
+        for two_dim in one_dim:
+            if isinstance(two_dim,list):
+                if (two_dim[-1]).para_check == "yes" and (two_dim[-1]).p_p_num == "":
+                    """
+                    節接続のNMSを入れるのなら、この-1のインスタンスを見て判断
+                    """
+                    for three_dim in two_dim:
+                        tmp_para_list.append(three_dim)
+                    c_para_check == "yes"
+                    c_para_list.append(tmp_para_list)
+                    tmp_para_list = []
+                    c_para_flag = "yes"
+                continue
                 
+
+
 
     if c_para_flag == "yes":
         print "result of clause parallel",out
@@ -79,12 +169,16 @@ def c_heiretsu(out_list):
         print "same as input(no clause parallel)",out_list
         return out_list
 
+       
+
 def heiretsu(out_list):
 
     print "並列処理前のout_list:",out_list
 
     para_index_list = []
 
+    #------------------------------------------------------
+    #並列係り先リストの作成ここから（別の関数に移してもいい）
     for one_dim in out_list:
         """
         並列の係り先番号を保存するリストを作成する
@@ -95,6 +189,8 @@ def heiretsu(out_list):
         para_index_listがこのリスト
         """
         for_one_dim_list = []
+        #------------------------------------------------------
+
         for two_dim in one_dim:
             if two_dim.para_check == "yes" and not two_dim.p_p_num == "":
                 for_one_dim_list.append(two_dim.k_dep)
@@ -103,9 +199,12 @@ def heiretsu(out_list):
                 for_one_dim_list.append(0)
 
         para_index_list.append(for_one_dim_list)
-
+    #並列係り先リストの構築ここまで
+    #------------------------------------------------------
     print "並列句係り先番号リスト:",para_index_list
 
+    #------------------------------------------------------
+    #元のインデックス番号を要素とするリストの作成ここから（別の関数に移していい）
     orig_index_list = []
     for one_dim in out_list:
         """
@@ -121,6 +220,8 @@ def heiretsu(out_list):
             for_one_dim_list.append(two_dim.k_position)
         orig_index_list.append(for_one_dim_list)
 
+    #インデックス番号を要素とするリストの作成ここまで
+    #------------------------------------------------------
     print "オリジナルのindexリスト:",orig_index_list
 
     
@@ -128,6 +229,8 @@ def heiretsu(out_list):
     max_para = 0
     initial_para_check = "yes"
 
+    #------------------------------------------------------
+    #ここから本処理開始
     for one_dim in para_index_list:
         """
         並列構造のリストを作成する:para_list
@@ -136,6 +239,8 @@ def heiretsu(out_list):
         para_index_listで見つかった０以外の要素は,並列の係り先のindex番号.このindex番号をorig_index_listから検索する.検索によって今,何番目にこのindexがあるのか？がわかる。
 
         """
+        #------------------------------------------------------
+        #二次元目の展開開始
         for two_dim in one_dim:
             if not two_dim == 0:
                 """
@@ -164,12 +269,12 @@ def heiretsu(out_list):
                 """
                 index_num = two_dim
 
-
+                #------------------------------------------------------
+                #initial_para_checkがyesのときここから
                 if initial_para_check == "yes":
                     """
                     行う操作
                     １並列リストの構築
-                    NMSを挿入するならここで入れるのが妥当
                     """
 
                     #並列数基本句数を考慮に入れる
@@ -207,13 +312,15 @@ def heiretsu(out_list):
 
                     para_count = para_count + 1
                     #最後は意図的にcontinueを記述していない
+                #initial_para_checkがyesのときここまで
+                #------------------------------------------------------
 
-
+                #------------------------------------------------------
+                #まだ、最大並列句数に達していないとき（並列句の中間のとき）ここから
                 if para_count < max_para and initial_para_check == "no":
                     """
                     行う操作
                     １並列リストの構築
-                    NMSを挿入するならここで入れるのが妥当
                     """
 
                     index_in_para_index_list = one_dim.index(index_num)
@@ -226,7 +333,6 @@ def heiretsu(out_list):
                         print "現在の並列リスト:",para_list_for_orig
 
                     for out_list_two_dim in out_list:
-
                         para_list.append(out_list_two_dim[orig_index])
                         
                         print "現在の並列リスト:",para_list  
@@ -236,8 +342,12 @@ def heiretsu(out_list):
                     print para_count
                     #このcontinueは必要
                     continue
+                #最大並列句に達していないときここまで
+                #------------------------------------------------------
 
 
+                #------------------------------------------------------
+                #終了条件ここから
                 if para_count >= max_para:
                     """
                     行う操作
@@ -256,6 +366,15 @@ def heiretsu(out_list):
 
                     print "並列処理すべて完了後の並列リスト:",orig_index_list
 
+                    #------------------------------------------------------
+                    #NMSタグの記述を行う
+                    #ただし、最後の句だけはNを入れない
+                    for one_para_ins in para_list:
+                        one_para_ins.nms == "N"
+                    para_list[-1].nms == ""
+                     #------------------------------------------------------
+
+
                     for out_list_two_dim in out_list:
                         out_list_two_dim[initial_para_i] = para_list
 
@@ -263,7 +382,14 @@ def heiretsu(out_list):
                             if delete_instance in out_list_two_dim:
                                 out_list_two_dim.remove(delete_instance)
 
+                #終了条件ここまで
+                #------------------------------------------------------
                     print "並列処理すべて完了後の並列リスト:",out_list
+
+        #二次元目の展開ここまで
+        #------------------------------------------------------
+    #三次元目の展開ここまで
+    #------------------------------------------------------
 
     return out_list,orig_index_list
 

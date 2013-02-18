@@ -5,7 +5,7 @@
 import re,string
 
 class info:
-    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat):
+    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat,nms):
         """
         文節、基本句、形態素の情報が格納されている
         基本句ごとの情報を格納する
@@ -43,6 +43,7 @@ class info:
         self.pos = pos
         self.dom = dom
         self.cat = cat
+        self.nms = nms
 
 def Syori(clause_list,clause_num,clause,negative_choice):
     """
@@ -50,6 +51,9 @@ def Syori(clause_list,clause_num,clause,negative_choice):
     
     """
     #print "--------------------"
+
+    #nmsはいつも空白文字（この関数では使わない）
+    nms = ""
 
     #関数の出力となる配列。入力文と同じ並び順にしている
     out_list = []
@@ -534,7 +538,7 @@ def Syori(clause_list,clause_num,clause,negative_choice):
         cat = one_dic["cat"]
         
         #一応、ネーミングは形態素から文節まで。という意味
-        m_k_c_info = info(c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat)
+        m_k_c_info = info(c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat,nms)
 
         #クラスに移し替えたら、入力文の順にリストに追加していく
         out_list.append(m_k_c_info)
