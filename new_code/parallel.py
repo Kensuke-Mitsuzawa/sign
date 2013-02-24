@@ -83,7 +83,7 @@ def c_heiretsu(out_list):
 
     check_result = check_clause(out_list)
 
-    print check_result
+    print "whether this sentence has functional clause or not:",check_result
     if check_result == "T":
         clause_func(out_list)
 
