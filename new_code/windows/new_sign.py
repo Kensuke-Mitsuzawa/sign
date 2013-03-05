@@ -1,10 +1,25 @@
-#! /usr/bin/python
-# -*- coding: utf-8 -*-
+# -*- coding:utf-8 -*-
+
+__author__ = 'Kensuke Mitsuzawa'
+__version__ = "2013/3/6"
+__copyright__ = ""
+__license__ = "GPL v3"
 
 
-import sys,codecs,subprocess,readline,re,string
+"""
+開発途中の重要なコメントは
+# __xx__
+
+のすぐ直下
+"""
+
+frag = 0
+
+import sys,codecs,subprocess,re,string
+#import readline
 import negative,make_sentence,syori,struc_analyze,parallel,modifier,make_clause,demo
 from types import *
+import commands
 
 ## 辞書の定義
 info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none","Modi":"none"}
@@ -34,7 +49,7 @@ class morp:
 #基本句ごとの情報を格納する
 class info:
     def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat):
-        
+
         self.c_dep = c_dependency
         self.c_position = c_position
         self.p_p_num = parallel_p_num
@@ -89,7 +104,7 @@ def make_case_set(info_dic):
         if not info_dic[one] == 'none':
             stack.append(info_dic[one])
             index_list.append(info_dic[one].order)
-            
+
             if info_dic[one].pos == 'modi':
                 modi_index_list.append(info_dic[one].order)
                 #code for check
@@ -116,14 +131,14 @@ def make_case_set(info_dic):
         next_w = modi_index_list[0]
     else:
         next_w = index_list[0]
-    
+
     while not len(checked_list) == len(stack):
-        
+
         for one in stack:
             if next_w == one.order:
                 checking_word = one
                 break
-        
+
         #-----------------------------------------------------------------
         #code for check
         #print "---------------------------------------"
@@ -153,17 +168,17 @@ def make_case_set(info_dic):
             case_name = checking_word.case_analiyzed
 
             set_dic.setdefault(case_name,case_set_list)
-        
+
             case_set_list = []
             #もし、まだ修飾語リストが空でなかったら（他の格にかかる修飾語が存在する場合）
-            if not len(modi_index_list) == 0: 
+            if not len(modi_index_list) == 0:
                 next_w = modi_index_list[0]
             else:
                 if not len(index_list) == 0:
                     next_w = index_list[0]
                 else:
                     pass
-                
+
         if checking_word.pos == "predict":
             case_set_list.append(checking_word)
             checked_list.append(checking_word)
@@ -188,7 +203,7 @@ def make_case_set(info_dic):
 
 def add_negative(set_dic,negative):
     predict_list = set_dic["Predict"]
-    
+
     dep = 'n'
     per='n'
     pos='negative'
@@ -221,54 +236,53 @@ def add_negative(set_dic,negative):
     if negative == "need":
         reg = "不必要"
         morp = "不必要"
-        
+
     negative_info = info(dep,per,reg,morp,pos,cat,dom,case,case_ana,order)
     predict_list.append(negative_info)
-    
+
     set_dic["Predict"] = predict_list
 
 
     return set_dic
-    
+
 
 
 
 def clause_count(tmp_list):
-## 節の数と各節が何行文の情報を持っているのか調べる関数    
+## 節の数と各節が何行文の情報を持っているのか調べる関数
 
     ## clause_numは節の数,リストclauseは各節が何行の情報を持っているか。
     clause_num = 0
     clause = []
     c_num = -1
 
-    print "-----------------------------"
-
+    # __xx__
+    #print "-----------------------------"
     for tmp in tmp_list:
- 
-       
-        if tmp == "*":   
+        if tmp == u"*":
             ## 前の節が何行分の情報を持っていたか。リストに追加する
             clause.append(c_num)
-            
+
             ## c_numの数を初期化
             c_num = 1
-            
+
             ## clause_numの数をひとつ増やす
             clause_num += 1
-            
-        ## 処理の都合上、最後の節はカウントできないので、無理やりだけど、こうする 
-        elif tmp == "EOS\n":
-            
+
+        ## 処理の都合上、最後の節はカウントできないので、無理やりだけど、こうする
+        #ここは機種に大きく依存する可能性がある。re.findallに切り替えてもいいかもしれない
+        elif tmp == u"EOS\r\n":
             ## EOSの前には。、？！の記号しかないと仮定して-1する
             c_num = c_num - 1
             clause.append(c_num)
 
-        else:            
+        else:
             c_num += 1
 
     clause.pop(0)
-    print "Number of Clauses is",clause_num
-    print "List of lines in each clause",clause
+    if frag == 1:
+        print "Number of Clauses is",clause_num
+        print "List of lines in each clause",clause
 
     return clause_num,clause
 
@@ -278,12 +292,15 @@ def knp_tab(sentence):
     tmp_list = []
     clause_list = []
 
+    #windowsでの使用のために以下のsubprocessはコメントオフ
+    """
     echo = subprocess.Popen(['echo',sentence],
                             stdout=subprocess.PIPE,
+                            shell=true
                             )
 
 
-    juman = subprocess.Popen(['juman'], 
+    juman = subprocess.Popen(['juman'],
                              stdin=echo.stdout,
                              stdout=subprocess.PIPE,
                              )
@@ -293,22 +310,32 @@ def knp_tab(sentence):
                            stdin = juman.stdout,
                            stdout=subprocess.PIPE,
                            )
+    """
+    #windows用のjuman,knpの入力はcp931でないといけないらしい
+    # __xx__
+    str = sentence.encode('cp932')
 
-
+    juman = subprocess.Popen(["juman"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    knp = subprocess.Popen(["knp", "-tab"], stdin=juman.stdout, stdout=subprocess.PIPE, shell=True)
+    juman.stdin.write(str)
+    juman.stdin.close()
+    juman.stdout.close()
     end_of_pipe_tab = knp.stdout
 
     for line in end_of_pipe_tab:
-        line = line.encode('utf-8')
+        #convertion from cp932 to unicode
+        line = unicode(line,'cp932')
         line_split = line.split(" ")
         tmp_list.append(line_split[0])
         clause_list.append(line)
-        
+
+
     #--------------------------------------
     #ここで各処理関数に情報を投げる
     clause_num, clause = clause_count(tmp_list)
     #returns 0 if not negation, returns 1 if negation
     negative_value = negative.find_negation(clause_list,clause_num,clause)
-    
+
     if negative_value == 0:
         negative_choice = ""
     else:
@@ -317,44 +344,50 @@ def knp_tab(sentence):
     #文の構文に関する情報。返ってくるのはハッシュマップ
     struc_dic = struc_analyze.structure_analyzer(clause_list,clause_num,clause)
     #文の情報を抽出。返ってくるのはリスト
-    out_list = syori.Syori(clause_list,clause_num,clause,negative_choice)
+    out_list = syori.Syori(clause_list,clause_num,clause,negative_choice,frag)
     #節が複数節なのか？単節なのか？を判断する。返ってくるのは二値。yes or no
     clause_check_result = make_clause.clause_check(out_list)
-    
+
     #そもそもif分けする必要はどこにもないので、そのうち修正すること
-    if clause_check_result == "yes":
+    if clause_check_result == u"yes":
         out_list = make_clause.make_clause_set(out_list)
     #別に記述せんでもいいが、明文化しておけばわかりやすいじゃん
-    if clause_check_result == "no":
+    if clause_check_result == u"no":
         out_list = make_clause.make_clause_set(out_list)
-    print "======================================="
-    print "result of make clause:",out_list
-    print "======================================="
-    out_list,orig_index_list = parallel.heiretsu(out_list)
+    if frag == 1:
+        print u"======================================="
+        print u"result of make clause:",out_list
+        print u"======================================="
+    out_list,orig_index_list = parallel.heiretsu(out_list,frag)
 
-    print "======================================="
-    out_list,orig_index_list = modifier.modi(out_list,orig_index_list)
+    if frag == 1:
+        print u"======================================="
+    out_list,orig_index_list = modifier.modi(out_list,orig_index_list,frag)
 
-    print "======================================="
-    print "after make modifier list:",out_list
-    print "======================================="
-    print "structure information is:",struc_dic
-    print "======================================="
-    print "demo out is:",demo.demo_test(out_list)
-    print "======================================="
-    out_list = parallel.c_heiretsu(out_list)
+    if frag == 1:
+        print u"======================================="
+        print u"after make modifier list:",out_list
+        print u"======================================="
+        print u"structure information is:",struc_dic
+        print u"======================================="
+        print u"demo out is:",demo.demo_test(out_list)
+        print u"======================================="
+    #__xx__
+    print demo.demo_test(out_list)
+
+    out_list = parallel.c_heiretsu(out_list,frag)
 
 
+    if frag == 1:
+        print "-----------------------------------"
+        print u"Is clause multi or not?:",clause_check_result
 
-    print "-----------------------------------"
-    print "Is clause multi or not?:",clause_check_result
-    
 
     '''
     set_dic = make_case_set(info_dic)
     if not negative_choice == "":
         set_dic = add_negative(set_dic,negative_choice)
-        
+
     print "--------------------------"
     print "About structure information"
     print struc_dic
@@ -364,7 +397,7 @@ def knp_tab(sentence):
     print "--------------------------"
 
     make_sentence.sentence_rule(set_dic,struc_dic)
-        
+
     #print set_dic
     #print info_dic
 
@@ -374,6 +407,5 @@ def knp_tab(sentence):
 
 
 if __name__ == '__main__':
-
-    sentence = raw_input("文を入力してネ☆\n※必ず文末に句点かクエスチョンマークで終了してください。\n")
+    sentence = raw_input(u"input sentence\r\n")
     info_dic,struc_dic = knp_tab(sentence)

@@ -3,7 +3,7 @@
 
 
 import sys,codecs,subprocess,readline,re,string
-import negative,make_sentence,syori,struc_analyze,parallel,modifier,make_clause,demo
+import negative,make_sentence,syori,struc_analyze
 from types import *
 
 ## 辞書の定義
@@ -30,18 +30,17 @@ class morp:
         self.cat
 """
 
-#文節、基本句、形態素の情報が格納されている
+
 #基本句ごとの情報を格納する
+#c_infoクラスを継承する
 class info:
-    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat):
+    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,input_morp,reg_morp_form,pos,dom,cat):
         
         self.c_dep = c_dependency
         self.c_position = c_position
         self.p_p_num = parallel_p_num
         self.p_c_num = parallel_c_num
         self.c_clause_type = c_clause_type
-        self.c_counter = c_counter
-        self.c_kazu = c_kazu
         self.k_dep = k_dependency
         self.predicate = predicate
         self.main_case = main_case
@@ -60,13 +59,40 @@ class info:
         self.modify_type = modify_type
         self.modify_check = modify_check
         self.per = per
-        self.k_counter = k_counter
-        self.k_kazu = k_kazu
         self.input_morp = input_morp
         self.reg_morp_form = reg_morp_form
         self.pos = pos
         self.dom = dom
         self.cat = cat
+
+#入力文が複数節なのか？単節なのか？を判断する。返すのは二値。yes or no
+def clause_check(out_list):
+    #どうも節には主節、連用節、連体節があるくさいが、とりあえずは、主節 or notで判断してもいいだろう
+    main_c = ""
+    modi_c = ""
+    #返り値
+    multi_c = ""
+    
+    for one_p in out_list:
+        
+        if one_p.c_clause_type == "主節":
+            main_c = "yes"
+
+        if one_p.c_clause_type == "連用節" or one_p.c_clause_type == "連用節":
+            modi_c = "yes"
+
+    if main_c == "yes" and modi_c == "yes":
+        multi_c = "yes"
+
+    if main_c == "yes" and not modi_c == "yes":
+        multi_c = "no"
+        
+
+    return multi_c
+
+
+def make_clause_set():
+    pass
 
 #修飾語と格の関係を構築する関数
 def make_case_set(info_dic):
@@ -298,7 +324,7 @@ def knp_tab(sentence):
     end_of_pipe_tab = knp.stdout
 
     for line in end_of_pipe_tab:
-        line = line.encode('utf-8')
+        #print line
         line_split = line.split(" ")
         tmp_list.append(line_split[0])
         clause_list.append(line)
@@ -319,31 +345,7 @@ def knp_tab(sentence):
     #文の情報を抽出。返ってくるのはリスト
     out_list = syori.Syori(clause_list,clause_num,clause,negative_choice)
     #節が複数節なのか？単節なのか？を判断する。返ってくるのは二値。yes or no
-    clause_check_result = make_clause.clause_check(out_list)
-    
-    #そもそもif分けする必要はどこにもないので、そのうち修正すること
-    if clause_check_result == "yes":
-        out_list = make_clause.make_clause_set(out_list)
-    #別に記述せんでもいいが、明文化しておけばわかりやすいじゃん
-    if clause_check_result == "no":
-        out_list = make_clause.make_clause_set(out_list)
-    print "======================================="
-    print "result of make clause:",out_list
-    print "======================================="
-    out_list,orig_index_list = parallel.heiretsu(out_list)
-
-    print "======================================="
-    out_list,orig_index_list = modifier.modi(out_list,orig_index_list)
-
-    print "======================================="
-    print "after make modifier list:",out_list
-    print "======================================="
-    print "structure information is:",struc_dic
-    print "======================================="
-    print "demo out is:",demo.demo_test(out_list)
-    print "======================================="
-    out_list = parallel.c_heiretsu(out_list)
-
+    clause_check_result = clause_check(out_list)
 
 
     print "-----------------------------------"
