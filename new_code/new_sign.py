@@ -155,8 +155,7 @@ def knp_tab(sentence):
 
     #sentence = u"もし雨が降ったら、あしたの遠足は延期です"
     sentence = u"私は可愛いネコが好きだ"
-    setntence = check_kuten(sentence)
-    print sentence
+    sentence = check_kuten(sentence)
 
     #windowsでは以下のsubprocessはコメントオフ
     
@@ -270,7 +269,6 @@ def check_kuten(sent):
             print u'--------------------------'
             print u'句点が自動挿入されました。'
             print u'--------------------------'
-            print sent
             return sent
 
         else:
