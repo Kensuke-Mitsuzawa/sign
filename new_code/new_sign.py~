@@ -1,297 +1,89 @@
-#! /usr/bin/python
-# -*- coding: utf-8 -*-
+# -*- coding:utf-8 -*-
+
+__author__ = 'Kensuke Mitsuzawa'
+__version__ = "2013/3/6"
+__copyright__ = ""
+__license__ = "GPL v3"
 
 
-import sys,codecs,subprocess,readline,re
-import negative,make_sentence
+"""
+開発途中の重要なコメントは
+# __xx__
+
+のすぐ直下
+"""
+
+frag = 0
+
+import sys,codecs,subprocess,re,string
+#import readline
+import negative,make_sentence,syori,struc_analyze,parallel,modifier,make_clause,demo
 from types import *
+import commands
 
 ## 辞書の定義
 info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none","Modi":"none"}
 
+"""
+# 節ごとの分析結果を格納するクラス
+#一番最初に、c_infoクラスが呼び出されて、次にそれを継承したkihon_info、最後に２つを継承したmorp_infoが呼び出される
+class c_info:
+    #初期化メソッドに文節単位の情報を格納
+    def __init__(self,c_dependency,position,parallel_p_num,parallel_c_num,c_clause_type):
+        self.c_dep = c_dependency
+        self.position = position
+        self.p_p_num = parallel_p_num
+        self.p_c_nun = parallel_c_num
+        self.c_c_type = c_clause_type
 
-## 節ごとの分析結果を格納するクラス
+class morp:
+    def __init__(self,input_morp,reg_morp_form,pos,dom,cat):
+        self.input_morp
+        self.reg_morp_form
+        self.pos
+        self.dom
+        self.cat
+"""
+
+#文節、基本句、形態素の情報が格納されている
+#基本句ごとの情報を格納する
 class info:
-    def __init__(self,dep,per,reg,morp,pos,cat,dom,case,case_ana,order):
-        self.dependency = dep
-        self.person = per
-        self.regular = reg
-        self.morpheme = morp
+    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat):
+
+        self.c_dep = c_dependency
+        self.c_position = c_position
+        self.p_p_num = parallel_p_num
+        self.p_c_num = parallel_c_num
+        self.c_clause_type = c_clause_type
+        self.c_counter = c_counter
+        self.c_kazu = c_kazu
+        self.k_dep = k_dependency
+        self.predicate = predicate
+        self.main_case = main_case
+        self.tense = tense
+        self.case_relation = case_relation
+        self.kaiseki_case = kaiseki_case
+        self.morp = morp
+        self.main = main
+        self.case_check = case_check
+        self.predicate_check = predicate_check
+        self.clause_type = clause_type
+        self.clause_func = clause_func
+        self.k_position = k_position
+        self.para_check = para_check
+        self.para_type = para_type
+        self.modify_type = modify_type
+        self.modify_check = modify_check
+        self.per = per
+        self.k_counter = k_counter
+        self.k_kazu = k_kazu
+        self.input_morp = input_morp
+        self.reg_morp_form = reg_morp_form
         self.pos = pos
-        self.category = cat
-        self.domain = dom
-        self.case = case
-        self.case_analiyzed = case_ana
-        self.order = order
+        self.dom = dom
+        self.cat = cat
 
-def Syori(clause_list,clause_num,clause,negative_choice):
-    #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
-    #print "--------------------"
-
-    struc_dic = {'nor':[],'ques':[],'passive':[],'cause':[],'if':[],'force':[]}
-    struc_dic['nor'] = "OK"
-
-    #カウンターの設置
-    counter = 0
-
-    #語の並び情報(order)
-    order = 0
-    
-    #ここで新しい節を読みおなし
-    for value in clause:
-
-        tmp_dic = {"dep":[],"per":[],"reg":[],"morp":[],"pos":[],"cat":[],"dom":[],"case":[],"case_ana":[]}
-
-
-        if counter == 0:
-            start_pos = 1
-            end_pos = value
-
-        else:
-            start_pos = end_pos + 1
-            end_pos = end_pos + value
-
-        counter += 1
-        
-        
-        #情報の抽出を正規表現でしていく
-        for i in range(start_pos,end_pos + 1):
-            sentence = clause_list[i]
-            
-            if not re.findall(r"\+.*D",sentence) == []:
-                #述語情報の獲得はここら辺がひっかかるはず
-                #----------------------------------------------------
-                predicate = re.findall(r"<状態述語>",sentence)
-                predicate = re.findall(r"<動態述語>",sentence)
-                predicate = re.findall(r"<体言止>",sentence)
-                #述語に対する主題格
-                main_case = re.findall(r"<主題格:.*?>",sentence)
-                #<文末>タグについて
-                position_t = re.findall(r"<文末>",sentence)
-                
-                #IDについて
-                ID = re.findall(r"<ID:.*?>",sentence)
-                #品詞について
-                pos = re.findall(r"<助詞>",sentence)
-
-                #体言か用言か
-                taigen = re.findall(r"<体言>",sentence)
-                yougen = re.findall(r"<用言:.*?>",sentence)
-
-                #動詞の時制について
-                if not re.findall(r"<時制.*?>",sentence) == []:
-                    t_t = re.findall(r"<時制.*?>",sentence)
-                    t_c = "".join(t_t)
-                    tense = t_c.replace("時制-","")
-
-                
-                #----------------------------------------------------
-                #パラメータが複数の状態を取りうるものは以下に記述
-                #モダリティ情報リスト
-                modality_list = []
-                #
-                #respect_list = []
-                #格関係リスト
-                case_relation_list = []
-                i_tmp_list = []
-                i_tmp_list = sentence.split("<")
-
-                for para in i_tmp_list:
-                    para = para.replace(">","")
-                    if not re.findall(r"モダリティ",para) == []:
-                        para = para.replace("モダリティ-","")
-                        modality_list.append(para)
-                             
-                    if not re.findall(r"敬語:.*",para) == []:
-                        para = para.replace("敬語:","")
-                        respect = para
-                 
-                    if not re.findall(r"格関係.*",para) == []:
-                        para = re.sub(r"格関係\d:","",para)
-                        case_relation_list.append(para)
-
-                    if not re.findall(r"解析格:.*",para) == []:
-                        kaiseki_case = para.replace("解析格","")
-
-                #----------------------------------------------------
-                #格に関する情報の獲得
-                #文頭タグにたいして
-                position_t = re.findall(r"<文頭>",sentence)
-                #人称について
-                person = re.findall(r"<.*人称?>",sentence)
-                #主題表現
-                main_case = re.findall(r"<主題表現>",sentence)
-                #格要素(述語の箇所にも現れることがある)
-                
-                #品詞については述語の箇所で記述しているので省略
-                #用言か体言かは述語の箇所で記述しているので省略
-
-                
-
-
-                #かかりうけ情報を獲得
-                if not re.findall(r"\+ \dD|\+ -\dD|\+ \dP|\+ -\dP",sentence) == []:
-                    tmp_dic["dep"] = re.findall(r"\+ \d|\+ -\d",sentence)
-                    tmp_dic["dep"] = int(("".join(tmp_dic["dep"])).strip("+ "))
-
-                #--------------------------------------
-
-
-
-            #--------------------------------------
-            #構文情報を拾う
-            #構文情報は+のところに出現するので、ここでif文分岐する
-
-            if not re.findall(r"\+.*D",sentence) == []:
-                #疑問文のとき（個人的には疑問文は？マークで判断してもよいとは思う）
-                if not re.findall(r"<モダリティ-疑問>",sentence) == []:
-                    struc_dic[nor] = []
-                    struc_dic[ques] = "OK"
-
-                #受け身のとき
-                if not re.findall(r"<態:受動>",sentence) == []:
-                    struc_dic[nor] = []
-                    struc_dic[passive] = "OK"
-
-                #使役文のとき
-                if not re.findall(r"<態:使役>",sentence) == []:
-                    struc_dic[nor] = []
-                    struc_dic[force] = "OK"
-            
-            #--------------------------------------
-            #かかりうけ情報
-            if not re.findall(r"\+ \dD|\+ -\dD|\+ \dP|\+ -\dP",sentence) == []:
-                tmp_dic["dep"] = re.findall(r"\+ \d|\+ -\d",sentence)
-                tmp_dic["dep"] = int(("".join(tmp_dic["dep"])).strip("+ "))
-                            
-            #--------------------------------------
-            #カテゴリー情報
-            if not re.findall(r"(<カテゴリ:.*?>)",sentence) == []:
-                tmp_dic["cat"] = re.findall("(<カテゴリ:.*?>)",sentence)
-            #--------------------------------------
-            #ドメイン情報
-
-            if not re.findall(r"(<ドメイン:.*?>)",sentence) == []:
-                tmp_dic["dom"] = re.findall("(<ドメイン:.*?>)",sentence)
-
-            #--------------------------------------
-            #格情報その１
-            if not re.findall(r"\+.*D",sentence) == []:
-                if not re.findall(r"(<係:.*?>)",sentence) == []:
-                    tmp_dic["case"] = re.findall("(<係:.*?>)",sentence)
-            #格情報その２(格解析結果）
-            if not re.findall(r"\+.*D",sentence) == []:
-                if not re.findall(r"<解析格:.*?>",sentence) == []:
-                    tmp_dic["case_ana"] = re.findall("<解析格:.*?>",sentence)
-                
-                if not re.findall(r"<主題表現>",sentence) == []:
-                    tmp_dic["case_ana"] = "主題表現"
-
-
-
-            #--------------------------------------
-            #正規化表記を拾う
-            if not re.findall(r"\*.*D",sentence) == []:
-                if tmp_dic["reg"] == []:
-                    tmp_dic["reg"] = re.findall(r"(<正規化代表表記:.*?>)",sentence)
-
-                    #正規化代表表記から形態素を取り出す
-                    if not tmp_dic["reg"] == []:
-                        #このif文内だけで使うreg_exp_listの定義
-                        reg_exp_list = []
-                        reg_exp = "".join(tmp_dic["reg"])
-                        reg_exp = re.sub(r"<正規化代表表記:","",reg_exp) 
-                        reg_exp = re.sub(r">","",reg_exp)
-                
-                        #大学院生が同一節内で「大学＋院生」のように分離されるのに対処
-                        if not re.findall("\+",reg_exp) == []:
-                            reg_exp_split = reg_exp.split("+")
-                            for i in range(0,len(reg_exp_split)):
-                                tmp_list = ("".join(reg_exp_split[i])).split("/")
-                                reg_exp_list.append(tmp_list[0])
-                                tmp_dic["morp"] = ["".join(reg_exp_list)]
-                        else:
-                            reg_exp_list = reg_exp.split("/")
-                            #morp_1が漢字表記でmorp_2がひらがな表記
-                            morp_1 = reg_exp_list[0]
-                            morp_2 = reg_exp_list[1]
-                            #とりあえず、漢字表記を形態素として登録する
-                            tmp_dic["morp"] = [morp_1]
-            #--------------------------------------
-            #人称情報の取得　とりあえず、主題表現のときを対象に判断することに。でもガ格が主題やハ格が主題のときはどうするの？
-    
-
-            if not re.findall(r"\+.*D",sentence) == []:
-                if not re.findall(r"<主題表現>",sentence) == []:
-
-                    if not re.findall(r"私",sentence) == []:
-                        tmp_dic["per"] = 1
-
-                    if not re.findall(r"あなた",sentence) == []:
-                        tmp_dic["per"] = 2
-
-                    if not tmp_dic["per"] == 1 and not tmp_dic["per"] == 2:
-                        tmp_dic["per"] = 3
-
-            #--------------------------------------
-            #テスト用
-            #print "".join(tmp_dic["morp"])
-
-            #--------------------------------------
-            #述語情報を拾う。述語になって欲しいところは<係:文末>になっているので、これを述語に置きかえる
-            if not re.findall(r"\+.*D",sentence) == []:
-
-                #このif条件に注意。修飾語と関係するエラーが起きることあり
-                if not re.findall(r"<状態述語>",sentence) == []  and not re.findall(r"<格要素>",sentence) == []:
-                    tmp_dic["case_ana"] = re.findall(r"状態述語",sentence)
-                if not [] == re.findall(r"<動態述語>",sentence):
-                    tmp_dic["case_ana"] = re.findall(r"動態述語",sentence)
-                if not [] == re.findall(r"<体言止>",sentence):
-                    tmp_dic["case_ana"] = re.findall(r"<体言止>",sentence)
-            #--------------------------------------
-            #品詞情報（とはいってもposはcaseかmodiかpredictのどれか）
-            #品詞情報の登録処理の記述はこの関数内に散らばっている。
-            #現状のままでも動作には問題なさそうだけど、きたない
-            if not re.findall(r"\+.*D",sentence) == []:
-
-                if not re.findall(r"解析格:.*",sentence) == []:
-                    tmp_dic["pos"] = "case"
-
-            #--------------------------------------
-
-            #infoクラスに情報を移していく
-            #tmp_dic["dep"]とtmp_dic["per"]は中身がint型整数
-            t_dep = tmp_dic["dep"]
-            t_per = tmp_dic["per"]
-
-            t_reg = "".join(tmp_dic["reg"])
-            t_morp = "".join(tmp_dic["morp"])
-            t_pos = "".join(tmp_dic["pos"])
-            t_cat = "".join(tmp_dic["cat"])
-            t_dom = "".join(tmp_dic["dom"])
-            t_case = "".join(tmp_dic["case"])
-            t_case_ana = "".join(tmp_dic["case_ana"])
-
-            clause_info = info(t_dep,t_per,t_reg,t_morp,t_pos,t_cat,t_dom,t_case,t_case_ana,order)
-            #--------------------------------------
-            #修飾語を拾う
-            #ここの部分はあとづけでなんとかしかたので、できれば、この部分をうまく処理した方がよい
-            if not re.findall(r"\+.*D",sentence) == []:
-                if not re.findall(r"連体修飾",sentence) == [] or not re.findall(r"<係:連用>",sentence) == []:
-                    key_name = "Modi" + chr(order)
-                    clause_info.pos = "modi"
-
-                    info_dic.setdefault(key_name,clause_info)
-            #--------------------------------------
-
-
-        #語の並び情報orderを＋１しておく
-        #print "word position is",order
-        order += 1
-        #print "----------------"
-    return info_dic,struc_dic
-
-
+#修飾語と格の関係を構築する関数
 def make_case_set(info_dic):
 
     #stackは文中に存在する修飾語と格をとりあえず保存するリスト
@@ -312,7 +104,7 @@ def make_case_set(info_dic):
         if not info_dic[one] == 'none':
             stack.append(info_dic[one])
             index_list.append(info_dic[one].order)
-            
+
             if info_dic[one].pos == 'modi':
                 modi_index_list.append(info_dic[one].order)
                 #code for check
@@ -339,14 +131,14 @@ def make_case_set(info_dic):
         next_w = modi_index_list[0]
     else:
         next_w = index_list[0]
-    
+
     while not len(checked_list) == len(stack):
-        
+
         for one in stack:
             if next_w == one.order:
                 checking_word = one
                 break
-        
+
         #-----------------------------------------------------------------
         #code for check
         #print "---------------------------------------"
@@ -376,17 +168,17 @@ def make_case_set(info_dic):
             case_name = checking_word.case_analiyzed
 
             set_dic.setdefault(case_name,case_set_list)
-        
+
             case_set_list = []
             #もし、まだ修飾語リストが空でなかったら（他の格にかかる修飾語が存在する場合）
-            if not len(modi_index_list) == 0: 
+            if not len(modi_index_list) == 0:
                 next_w = modi_index_list[0]
             else:
                 if not len(index_list) == 0:
                     next_w = index_list[0]
                 else:
                     pass
-                
+
         if checking_word.pos == "predict":
             case_set_list.append(checking_word)
             checked_list.append(checking_word)
@@ -411,7 +203,7 @@ def make_case_set(info_dic):
 
 def add_negative(set_dic,negative):
     predict_list = set_dic["Predict"]
-    
+
     dep = 'n'
     per='n'
     pos='negative'
@@ -444,54 +236,54 @@ def add_negative(set_dic,negative):
     if negative == "need":
         reg = "不必要"
         morp = "不必要"
-        
+
     negative_info = info(dep,per,reg,morp,pos,cat,dom,case,case_ana,order)
     predict_list.append(negative_info)
-    
+
     set_dic["Predict"] = predict_list
 
 
     return set_dic
-    
+
 
 
 
 def clause_count(tmp_list):
-## 節の数と各節が何行文の情報を持っているのか調べる関数    
+## 節の数と各節が何行文の情報を持っているのか調べる関数
 
     ## clause_numは節の数,リストclauseは各節が何行の情報を持っているか。
     clause_num = 0
     clause = []
     c_num = -1
 
-    print "-----------------------------"
-
+    # __xx__
+    #print "-----------------------------"
     for tmp in tmp_list:
- 
-       
-        if tmp == "*":   
+        if tmp == u"*":
             ## 前の節が何行分の情報を持っていたか。リストに追加する
             clause.append(c_num)
-            
+
             ## c_numの数を初期化
             c_num = 1
-            
+
             ## clause_numの数をひとつ増やす
             clause_num += 1
-            
-        ## 処理の都合上、最後の節はカウントできないので、無理やりだけど、こうする 
-        elif tmp == "EOS\n":
-            
+
+        ## 処理の都合上、最後の節はカウントできないので、無理やりだけど、こうする
+        #ここは機種に大きく依存する可能性がある。re.findallに切り替えてもいいかもしれない
+        #windows では "EOS\r\n" Linuxでは"EOS\n"
+        elif tmp == u"EOS\n":
             ## EOSの前には。、？！の記号しかないと仮定して-1する
             c_num = c_num - 1
             clause.append(c_num)
 
-        else:            
+        else:
             c_num += 1
 
     clause.pop(0)
-    print "Number of Clauses is",clause_num
-    print "List of lines in each clause",clause
+    if frag == 1:
+        print "Number of Clauses is",clause_num
+        print "List of lines in each clause",clause
 
     return clause_num,clause
 
@@ -501,12 +293,15 @@ def knp_tab(sentence):
     tmp_list = []
     clause_list = []
 
+    sentence = u"もし雨が降ったら、あしたの遠足は延期です。"
+    #windowsでの使用のために以下のsubprocessはコメントオフ
+    
     echo = subprocess.Popen(['echo',sentence],
                             stdout=subprocess.PIPE,
                             )
 
 
-    juman = subprocess.Popen(['juman'], 
+    juman = subprocess.Popen(['juman'],
                              stdin=echo.stdout,
                              stdout=subprocess.PIPE,
                              )
@@ -517,31 +312,89 @@ def knp_tab(sentence):
                            stdout=subprocess.PIPE,
                            )
 
-
+    """
+    #以下、windows用のコード
+    #windows用のjuman,knpの入力はcp932でないといけない
+     __xx__
+    str = sentence.encode('cp932')
+    str = sentence
+    
+    juman = subprocess.Popen(["juman"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
+    knp = subprocess.Popen(["knp", "-tab"], stdin=juman.stdout, stdout=subprocess.PIPE, shell=True)
+    juman.stdin.write(str)
+    juman.stdin.close()
+    juman.stdout.close()
+    """
+    
     end_of_pipe_tab = knp.stdout
 
     for line in end_of_pipe_tab:
-        #print line
+        #convertion from cp932 to unicode
+        #if linux, conversion from 'utf-8'
+        line = unicode(line,'utf-8')
         line_split = line.split(" ")
         tmp_list.append(line_split[0])
         clause_list.append(line)
-        
+
+
+    #--------------------------------------
     #ここで各処理関数に情報を投げる
     clause_num, clause = clause_count(tmp_list)
     #returns 0 if not negation, returns 1 if negation
     negative_value = negative.find_negation(clause_list,clause_num,clause)
-    
+
     if negative_value == 0:
         negative_choice = ""
     else:
         negative_choice = negative.negation(clause_list,clause_num,clause)
 
-    info_dic,struc_dic = Syori(clause_list,clause_num,clause,negative_choice)
+    #文の構文に関する情報。返ってくるのはハッシュマップ
+    struc_dic = struc_analyze.structure_analyzer(clause_list,clause_num,clause)
+    #文の情報を抽出。返ってくるのはリスト
+    out_list = syori.Syori(clause_list,clause_num,clause,negative_choice,frag)
+    #節が複数節なのか？単節なのか？を判断する。返ってくるのは二値。yes or no
+    clause_check_result = make_clause.clause_check(out_list)
+
+    #そもそもif分けする必要はどこにもないので、そのうち修正すること
+    if clause_check_result == u"yes":
+        out_list = make_clause.make_clause_set(out_list)
+    #別に記述せんでもいいが、明文化しておけばわかりやすいじゃん
+    if clause_check_result == u"no":
+        out_list = make_clause.make_clause_set(out_list)
+    if frag == 1:
+        print u"======================================="
+        print u"result of make clause:",out_list
+        print u"======================================="
+    out_list,orig_index_list = parallel.heiretsu(out_list,frag)
+
+    if frag == 1:
+        print u"======================================="
+    out_list,orig_index_list = modifier.modi(out_list,orig_index_list,frag)
+
+    if frag == 1:
+        print u"======================================="
+        print u"after make modifier list:",out_list
+        print u"======================================="
+        print u"structure information is:",struc_dic
+        print u"======================================="
+        print u"demo out is:",demo.demo_test(out_list)
+        print u"======================================="
+    #__xx__
+    print demo.demo_test(out_list)
+
+    out_list = parallel.c_heiretsu(out_list,frag)
+
+
+    if frag == 1:
+        print "-----------------------------------"
+        print u"Is clause multi or not?:",clause_check_result
+
+
     '''
     set_dic = make_case_set(info_dic)
     if not negative_choice == "":
         set_dic = add_negative(set_dic,negative_choice)
-        
+
     print "--------------------------"
     print "About structure information"
     print struc_dic
@@ -551,20 +404,15 @@ def knp_tab(sentence):
     print "--------------------------"
 
     make_sentence.sentence_rule(set_dic,struc_dic)
-        
+
     #print set_dic
     #print info_dic
 
     '''
 
-    return info_dic,struc_dic
+    return out_list,struc_dic
 
 
 if __name__ == '__main__':
-
-    sentence = raw_input("文を入力してネ☆\n※必ず文末に句点かクエスチョンマークで終了してください。\n")
+    sentence = raw_input(u"input sentence\r\n")
     info_dic,struc_dic = knp_tab(sentence)
-         
-
-
-
