@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 __author__ = 'Kensuke Mitsuzawa'
-__version__ = "2013/3/6"
+__version__ = "2013/3/8"
 __copyright__ = ""
 __license__ = "GPL v3"
 
@@ -48,6 +48,10 @@ def modi(out_list,orig_index_list,frag):
 
                 以下に修飾語となる時のルールを記述していく
                 """
+                #__xx__
+                if frag == 1:
+                    print "--"*20,"\n",u"三次元配列（並列構造なし）の場合"
+
                 if two_dim.pos == u"副詞" and two_dim.modify_check == u"yes":
                     """
                     副詞かつ修飾語の場合の記述
@@ -81,6 +85,9 @@ def modi(out_list,orig_index_list,frag):
                 三次元目のインスタンスを格納するようのリストを用意
                 三次元目のリストを展開
                 """
+                if frag == 1:
+                    print u"三次元配列（並列構造あり）の場合"
+
                 for_two_dim_list = []
                 #------------------------------------------------------
                 #三次元目の展開を開始
@@ -151,6 +158,7 @@ def multi_modi_set(out_list,orig_index_list,modi_index_list,frag):
     """
 
     if frag == 1:
+        print u"multi_modi_setが実行されています"
         print u"係り受け先リストは:",modi_index_list
 
     modi_set_list_orig = []
@@ -196,14 +204,12 @@ def multi_modi_set(out_list,orig_index_list,modi_index_list,frag):
                             modi_set_list_orig.append(orig_index_list[one_dim_i][two_dim_i])
                             modi_set_list_orig.append(orig_index_list[orig_one_dim_i][orig_index])
 
-                            modi_set_list_orig.reverse()
                             #__xx__
                             #print modi_set_list_orig
 
                             modi_set_list.append(out_list[one_dim_i][two_dim_i])
                             modi_set_list.append(out_list[orig_one_dim_i][orig_index])
 
-                            modi_set_list.reverse()
                             #__xx__
                             #print modi_set_list
 
@@ -217,8 +223,16 @@ def multi_modi_set(out_list,orig_index_list,modi_index_list,frag):
                 #------------------------------------------------------
                 #終了条件,次に係り受けをもっていない（つまり、修飾語句固まりの最終）
                 if next_dep_number == 0:
+                    if frag == 1:
+                        #__xx__
+                        print u'[message from multi_modi_set]'
+                        print u'連続修飾の最後の句を処理します'
+                        print u'modi_set_list_orig:',modi_set_list_orig
 
                     initial_modi_check = u"yes"
+
+                    #modi_set_list_origとmodi_set_listをreverseする
+                    modi_set_list_orig.reverse(), modi_set_list.reverse()
 
                     orig_index_list[one_dim_i][initial_modi_i] = modi_set_list_orig
                     out_list[one_dim_i][initial_modi_i] = modi_set_list
@@ -331,11 +345,15 @@ def paralist_error(dep_in_paralist_error,dep_num_paralist_error,initial_modi_i,o
 
 
 def make_modi_set(out_list,orig_index_list,modi_index_list,frag):
+    #__xx__
     if frag == 1:
-        print u"修飾係り受け先リスト:",modi_index_list
-        print u"現在のindexリスト:",orig_index_list
-        print u"現在のインスタンスリスト:",out_list
-
+        print u"-"*40
+        print u"[message from make_modi_set]"
+        print u"make_modi_setが実行されています"
+        print u"修飾係り受け先リスト(modi_index_list):",modi_index_list
+        print u"現在のindexリスト(orig_index_list):",orig_index_list
+        print u"現在のインスタンスリスト(out_list):",out_list
+        print u"-"*40
 
     #------------------------------------------------------
     #一次元目の展開を開始
@@ -369,10 +387,19 @@ def make_modi_set(out_list,orig_index_list,modi_index_list,frag):
             #------------------------------------------------------
             #並列構造なしのif
             if not isinstance(two_dim,list):
+                #__xx__
+                if frag == 1:
+                    print u"[message from make_modi_set]"
+                    print u"並列構造はありません"
+
                 if not two_dim == 0:
                     """
                     two_dimがインスタンス（つまり並列構造が存在しないとき）
                     """
+                    #__xx__
+                    if frag == 1:
+                            print u"[message from make_modi_set]"
+                            print u"連続修飾語の最初の句を処理します"
                     #修飾語が連続する場合のために次の語が係り元かどうかチェックする。次が０なら、係りもとはない
                     now_index = one_dim.index(two_dim)
                     next_dep_number = one_dim[now_index+1]
@@ -444,9 +471,14 @@ def make_modi_set(out_list,orig_index_list,modi_index_list,frag):
                         修飾語（←対象）　修飾語　格
                         のようなケース
                         """
+                        #__xx__
+                        if frag == 1:
+                            print u"[message from make_modi_set]"
+                            print u"連続修飾語の中間の句を処理します"
 
                         index_in_modi_index_list = one_dim.index(two_dim)
 
+                        print dep_in_modi_index_list
                         if dep_in_paralist_error == u"no":
                             for orig_two_dim in orig_index_list:
 
@@ -454,11 +486,14 @@ def make_modi_set(out_list,orig_index_list,modi_index_list,frag):
                                     orig_index = orig_two_dim.index(two_dim)
                                     modi_set_list_orig.append(orig_two_dim[orig_index])
                                     
+                                    modi_set_list_orig.reverse()
                                     #__xx__
                                     #print u"現在の修飾リスト:",modi_set_list_orig
 
                                     for out_list_two_dim in out_list:
                                         modi_set_list.append(out_list[orig_index])
+
+                                        modi_set_list.reverse()
 
                                 except ValueError:
                                     dep_in_paralist_error = u"yes"
@@ -492,6 +527,9 @@ def make_modi_set(out_list,orig_index_list,modi_index_list,frag):
                         修飾語連続の末尾の時に以下が実行される
                         next_dep_number（係り受け先リストで今の次の要素）が0なら、今の句が、修飾語連続の末尾と判断できる
                         """
+                        if frag == 1:
+                            print u"[message from make_modi_set]"
+                            print u"連続修飾語の最後の句を処理します"
                         initial_modi_check = u"yes"
 
                         for orig_two_dim in orig_index_list:
@@ -533,10 +571,19 @@ def make_modi_set(out_list,orig_index_list,modi_index_list,frag):
                 をこうする必要がある
                 [[係りもと　並列インスタンス　係り先]　その他]
                 """
+                #__xx__
+                if frag == 1:
+                    print u"[message from make_modi_set]"
+                    print u"並列構造が存在しています"
+                    
+                
                 for three_dim in two_dim:
                     if not three_dim == 0:
 
                         if initial_modi_check == u"yes":
+                            if frag == 1:
+                                print u"[message from make_modi_set]"
+                                print u"連続修飾語の最初の句です"
                             modi_set_list = []
                             modi_set_list_orig = []
 
@@ -582,26 +629,43 @@ def make_modi_set(out_list,orig_index_list,modi_index_list,frag):
                             今は[修飾語　修飾語]　格　に対する処理
                             もし、[修飾語　修飾語　修飾語]格　だったらどうすんのさ？まだ、考えてない
                             """
+                            #__xx__
+                            if frag == 1:
+                                print u"[message from make_modi_set]"
+                                print u"連続修飾語の中間の句です"
+
                             initial_modi_check = u"yes"
 
                             for orig_two_dim in orig_index_list:
 
                                 try:
                                     orig_index = orig_two_dim.index(three_dim)
-
                                     modi_set_list_orig.append(orig_two_dim[orig_index])
+                                    #modi_set_list_orig.reverse()
+
+                                    
 
                                 except ValueError:
                                     print u"three_dimは見つからなかったってよ！"
+
+                                #---------------------------------------------
+                                #orig_setの中の修飾語に該当するindexをmodi_set_list_origに置き換え
+                                #ここでindexを反転させて、[被修飾語　修飾語]にする
+                                modi_set_list.reverse()
 
                                 orig_two_dim[initial_modi_i] = modi_set_list_orig
                                 for delete_number in modi_set_list_orig:
                                     if delete_number in orig_two_dim:
                                         orig_two_dim.remove(delete_number)
+                                #---------------------------------------------
 
+                            #---------------------------------------------
+                            #out_listの中の修飾語に該当するindexをmodi_set_listに置き換え
                             for out_list_two_dim in out_list:
                                 modi_set_list.append(out_list_two_dim[orig_index])
-
+                                #ここでindexを反転させて[被修飾語　修飾語]にする
+                                modi_set_list.reverse()
+                                
                                 out_list_two_dim[initial_modi_i] = modi_set_list
                                 for delete_ins in modi_set_list:
                                     if delete_ins in out_list_two_dim:

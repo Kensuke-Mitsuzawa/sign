@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 __author__ = 'Kensuke Mitsuzawa'
-__version__ = "2013/3/7"
+__version__ = "2013/3/9"
 __copyright__ = ""
 __license__ = "GPL v3"
 
@@ -13,55 +13,15 @@ __license__ = "GPL v3"
 のすぐ直下
 """
 
-frag = 0
+frag = 1
 
 import sys,codecs,subprocess,re,string
-#import readline
-import negative,make_sentence,syori,struc_analyze,parallel,modifier,make_clause,demo
+import negative,make_sentence,syori,struc_analyze,parallel,modifier,make_clause,demo,predicate_dic
 from types import *
 import commands
 
 ## 辞書の定義
 info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none","Modi":"none"}
-
-#文節、基本句、形態素の情報が格納されている
-#基本句ごとの情報を格納する
-class info:
-    def __init__(self,c_dependency,c_position,parallel_p_num,parallel_c_num,c_clause_type,c_counter,c_kazu,k_dependency,predicate,main_case,tense,case_relation,kaiseki_case,morp,main,case_check,predicate_check,clause_type,clause_func,k_position,para_check,para_type,modify_type,modify_check,per,k_counter,k_kazu,input_morp,reg_morp_form,pos,dom,cat):
-
-        self.c_dep = c_dependency
-        self.c_position = c_position
-        self.p_p_num = parallel_p_num
-        self.p_c_num = parallel_c_num
-        self.c_clause_type = c_clause_type
-        self.c_counter = c_counter
-        self.c_kazu = c_kazu
-        self.k_dep = k_dependency
-        self.predicate = predicate
-        self.main_case = main_case
-        self.tense = tense
-        self.case_relation = case_relation
-        self.kaiseki_case = kaiseki_case
-        self.morp = morp
-        self.main = main
-        self.case_check = case_check
-        self.predicate_check = predicate_check
-        self.clause_type = clause_type
-        self.clause_func = clause_func
-        self.k_position = k_position
-        self.para_check = para_check
-        self.para_type = para_type
-        self.modify_type = modify_type
-        self.modify_check = modify_check
-        self.per = per
-        self.k_counter = k_counter
-        self.k_kazu = k_kazu
-        self.input_morp = input_morp
-        self.reg_morp_form = reg_morp_form
-        self.pos = pos
-        self.dom = dom
-        self.cat = cat
-
 
 
 def add_negative(set_dic,negative):
@@ -153,12 +113,10 @@ def knp_tab(sentence):
     tmp_list = []
     clause_list = []
 
-    #sentence = u"もし雨が降ったら、あしたの遠足は延期です"
-    sentence = u"私は可愛いネコが好きだ"
     sentence = check_kuten(sentence)
 
     #windowsでは以下のsubprocessはコメントオフ
-    
+
     echo = subprocess.Popen(['echo',sentence],
                             stdout=subprocess.PIPE,
                             )
@@ -180,7 +138,6 @@ def knp_tab(sentence):
     #windows用のjuman,knpの入力はcp932でないといけない
      __xx__
     str = sentence.encode('cp932')
-    str = sentence
     
     juman = subprocess.Popen(["juman"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
     knp = subprocess.Popen(["knp", "-tab"], stdin=juman.stdout, stdout=subprocess.PIPE, shell=True)
@@ -232,32 +189,35 @@ def knp_tab(sentence):
     if clause_check_result == u"no":
         out_list = make_clause.make_clause_set(out_list)
     if frag == 1:
-        print u"======================================="
+        print u"*"*40
         print u"result of make clause:",out_list
-        print u"======================================="
+        print u"*"*40
     out_list,orig_index_list = parallel.heiretsu(out_list,frag)
 
     if frag == 1:
-        print u"======================================="
+        print u"*"*40
     out_list,orig_index_list = modifier.modi(out_list,orig_index_list,frag)
 
     if frag == 1:
-        print u"======================================="
+        print u"*"*40
         print u"after make modifier list:",out_list
-        print u"======================================="
+        print u"*"*40
         print u"structure information is:",struc_dic
-        print u"======================================="
-        print u"demo out is:",demo.demo_test(out_list)
-        print u"======================================="
+        print u"*"*40
+
     #__xx__
-    demo.demo_test(out_list)
+    #demo.demo_test(out_list)
+
+    p_a_dic = predicate_dic.make_p_a_dic(out_list,orig_index_list,frag)
+
+    make_sentence.sentence(struc_dic,p_a_dic,out_list,frag)
 
     #__xx__
     #out_list = parallel.c_heiretsu(out_list,frag)
 
 
     if frag == 1:
-        print "-----------------------------------"
+        print "*"*40
         print u"Is clause multi or not?:",clause_check_result
 
     return out_list,struc_dic
@@ -282,4 +242,5 @@ def check_knp_error(line):
 
 if __name__ == '__main__':
     sentence = raw_input(u"input sentence\r\n")
+    sentence = u"私は先生に怒られた"
     info_dic,struc_dic = knp_tab(sentence)
