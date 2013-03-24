@@ -24,6 +24,28 @@ import commands
 info_dic = {"main":"none","Ga":"none","Wo":"none","Ni":"none","He":"none","To":"none","Kara":"none","Yori":"none","De":"none","Time":"none","Predict":"none","Modi":"none"}
 
 
+def conv_encoding(data, to_enc="utf_8"):
+    #This code is originally from http://speirs.blog17.fc2.com/blog-entry-4.html
+    """
+    stringのエンコーディングを変換する
+    @param ``data'' str object.
+    @param ``to_enc'' specified convert encoding.
+    @return str object.
+    """
+    lookup = ('utf_8', 'euc_jp', 'euc_jis_2004', 'euc_jisx0213',
+            'shift_jis', 'shift_jis_2004','shift_jisx0213',
+            'iso2022jp', 'iso2022_jp_1', 'iso2022_jp_2', 'iso2022_jp_3',
+            'iso2022_jp_ext','latin_1', 'ascii')
+    for encoding in lookup:
+        try:
+            #__xx__
+            print u'Your character coding is:{0}'.format(encoding)
+            data = data.decode(encoding)
+            return data
+        except:
+            pass
+    
+
 def add_negative(set_dic,negative):
     predict_list = set_dic["Predict"]
 
@@ -113,25 +135,30 @@ def knp_tab(sentence):
     tmp_list = []
     clause_list = []
 
+    sentence = conv_encoding(sentence)
     sentence = check_kuten(sentence)
 
     #windowsでは以下のsubprocessはコメントオフ
 
-    echo = subprocess.Popen(['echo',sentence],
-                            stdout=subprocess.PIPE,
-                            )
+    try:
+        echo = subprocess.Popen(['echo',sentence],
+                                stdout=subprocess.PIPE,
+                                )
+
+        
+        juman = subprocess.Popen(['juman'],
+                                 stdin=echo.stdout,
+                                 stdout=subprocess.PIPE,
+                                 )
 
 
-    juman = subprocess.Popen(['juman'],
-                             stdin=echo.stdout,
-                             stdout=subprocess.PIPE,
-                             )
+        knp = subprocess.Popen(['knp','-case','-tab'],
+                               stdin = juman.stdout,
+                               stdout=subprocess.PIPE,
+                               )
 
-
-    knp = subprocess.Popen(['knp','-case','-tab'],
-                           stdin = juman.stdout,
-                           stdout=subprocess.PIPE,
-                           )
+    except TypeError:
+        sys.exit(u'KNPの解析エラーが発生しました。解析を終了します。')
 
     """
     #以下、windows用のコード
@@ -223,7 +250,7 @@ def knp_tab(sentence):
     return out_list,struc_dic
 
 def check_kuten(sent):
-    if re.findall(ur'。',sent) == []:
+    if re.findall(ur'。',sent) == [] and not sent == '':
         if re.findall(ur'？',sent) == [] or re.findall(ur'！',sent) == []:
             sent = sent + u'。'
             print u'--------------------------'
@@ -237,10 +264,10 @@ def check_kuten(sent):
         pass
 
 def check_knp_error(line):
-    if not re.findall(ur'ERROR:Cannot make mrph',line) == []: return u'error'
+    if not re.findall(ur'ERROR:Cannot make mrph',line) == []: sys.exit(u'KNPの解析エラーが発生しました。解析を終了します。')
     else: return u'n'
 
 if __name__ == '__main__':
     sentence = raw_input(u"input sentence\r\n")
-    sentence = u"私は先生に怒られた"
+    #sentence = u"私は先生に怒られた"
     info_dic,struc_dic = knp_tab(sentence)

@@ -1,258 +1,222 @@
 #! /usr/bin/python
-# -*- coding:utf-8-*-
+# -*- coding:utf-8 -*-
 
-#------------------------------------------------------------
-# KNPの解析結果から述語と格の関係のみを抽出するスクリプト
-# 2012/12/31
-# 大幅に修正 2013/1/7
-#------------------------------------------------------------
+__author__ = 'Kensuke Mitsuzawa'
+__version__ = "2013/3/24"
+__copyright__ = ""
+__license__ = "GPL v3"
 
+frag = 1
 
-import sys,codecs,subprocess,readline,re
+import sys,codecs,subprocess,readline,re,os,codecs,pickle
+import call_KNP,call_juman,predicate,modi
 
-def juman(word):
-    cat = ""
-    domain = ""
+overlap_dic = {}
 
-    echo = subprocess.Popen(['echo',word],
-                            stdout=subprocess.PIPE,
-                            )
+entry_dic = {u'entry':u'',u'entry_h':u'',u'entry_pos':u'',u'pos_in_ex':u'',u'ex_sent':u'',u'out_list':u'',u'p_a':u'',u'modi':u'',u'ID':u''}
 
+def conv_encoding(data, to_enc="utf_8"):
+    """
+    stringのエンコーディングを変換する
+    @param ``data'' str object.
+    @param ``to_enc'' specified convert encoding.
+    @return str object.
+    """
+    lookup = ('utf_8', 'euc_jp', 'euc_jis_2004', 'euc_jisx0213',
+            'shift_jis', 'shift_jis_2004','shift_jisx0213',
+            'iso2022jp', 'iso2022_jp_1', 'iso2022_jp_2', 'iso2022_jp_3',
+            'iso2022_jp_ext','latin_1', 'ascii')
+    for encoding in lookup:
+        try:
+            data = data.decode(encoding)
+            print encoding
+            break
+        except:
+            pass
 
-    juman = subprocess.Popen(['/home/kensuke-mi/bin/juman'], 
-                             stdin=echo.stdout,
-                             stdout=subprocess.PIPE,
-                             )
-
-
-    end_of_pipe_tab = juman.stdout
-
-    for result in end_of_pipe_tab:
-
-        result_list = result.split()
-
-        for detail in result_list:
-            
-            if not re.findall(r"カテゴリ:",detail) == []:
-                detail = detail.strip('"')
-                cat = detail
-
-            if not re.findall(r"ドメイン:",detail) == []:
-                detail = detail.strip('"')
-                domain = detail
-
-    return cat,domain
-
-#def Syori(clause_list,clause_num,clause):
-def Syori(sentence):
-    # 格解析結果を保存するリスト
-    a_r_list = []
+def decision_analysis(entry_dic):
+    """
+    概要：見出し語の品詞と例文中での品詞の違いによって解析処理を別にしないといけない．そのための判断を行う．
+    入力：entry_dic
+    """
     
-    # 出力を一時的に保存しておくリスト
-    print_list = []
-
-    '''
-    #clause_listは節ごとに切った解析結果、clause_numは節の数、clauseは各節が何行分の情報を持っているか？リスト
-    #print "--------------------"
-
-    #カウンターの設置
-    counter = 0
-
-    #語の並び情報(order)
-    order = 0
-    
-    #ここで新しい節を読みおなし
-    for value in clause:
-
-        if counter == 0:
-            start_pos = 1
-            end_pos = value
-
-        else:
-            start_pos = end_pos + 1
-            end_pos = end_pos + value
-
-        counter += 1
+    if entry_dic[u'entry_pos'] == entry_dic[u'pos_in_ex']:
+        if frag == 1:
+            print u"見出し語は名詞で，例文中は名詞で利用：修飾を見る処理"
+            print u'^'*40
+        entry_dic = modi.add_context_word(entry_dic)
         
-        print "-------------------------"
-        print " ".join(clause_list)
-        #print "below sentence is result of KNP"        
-        #情報の抽出を正規表現でしていく
-        for i in range(start_pos,end_pos + 1):
-            sentence = clause_list[i]
+        
+    else:
+        
+        if entry_dic[u'entry_pos'] == u'名詞' and entry_dic[u'pos_in_ex'] == u'動詞':
+            if frag == 1:
+                print u"名詞，動詞　見出し語を述語として見る処理"
+                print u'^'*40
+            entry_dic =  predicate.p_a(entry_dic,frag)
 
-            #print sentence
+        elif entry_dic[u'entry_pos'] == u'動詞':
+            if frag == 1:
+                print u"動詞　見出し語を述語としてみる処理"
+                print u'^'*40
+            entry_dic = predicate.p_a(entry_dic,frag)
 
-            #-----------------------------------------------------------
-            # KNPの解析結果のうち、述語の、述語と格の関係のみを記述した行のみを正規表現で切り出し
 
-            if not re.findall(r"\+.*D",sentence) == []:
+        elif entry_dic[u'entry_pos'] == u'形容詞':
+            if frag == 1:
+                print u'形容詞　修飾をみる処理'
+                print u'^'*40
+            modi.add_context_word(entry_dic)
+
+    return entry_dic
+
+
+def find_pos_in_ex(out_list,entry):
+    """
+    概要：例文中でエントリの語がどの品詞で用いられているか？を調べる．
+    """
+    for e_instance in out_list:
+        reg_form = e_instance.reg_morp_form
+        
+        #entryと一致,またはentryを含む，正規化形態素を探す
+        if not re.findall(entry,reg_form) == []:
+            #entryを一致，または含む正規化形態素の時のposを調べる
+            pos_in_ex = (e_instance.pos)
+            
+
+            return pos_in_ex
+
+
+def make_entry_dic(sent):
+    """
+    概要：辞書エントリーとその関係する情報を含む辞書を作成する．
+    辞書の内容:{entry:見出し語,entry_pos:見出し語の品詞,ex_sent:見出し語項が持つ例文,out_list:KNPによる例文の解析結果,pos_in_ex:例文中で使われている見出し語の品詞
+    """
+    #entry_dic = dic_initialize(entry_dic)
+    entry_dic = {u'entry':u'',u'entry_h':u'',u'entry_pos':u'',u'pos_in_ex':u'',u'ex_sent':u'',u'out_list':u'',u'p_a':u'',u'modi':u'',u'ID':u''}
+    #__xx__
+    if frag == 1:
+        print '\nNew entry starts from here'
+        print u'*'*40
+
+    u_sent = sent.decode('utf-8').strip(u'\n')
+    sp_list = u_sent.split(u'\t')
+    entry = sp_list[1]
+    #call juman anlysis script
+    entry_pos = call_juman.analysis_entry(entry)
+    entry_hiragana = call_juman.get_hiragana(entry)
+    
+    ex_sent = sp_list[2]
+    #call sentence analysis script
+    out_list = call_KNP.call(ex_sent,frag)
+    pos_in_ex = find_pos_in_ex(out_list,entry)
+    
+    entry_dic[u'ID'] = sp_list[0]
+    entry_dic[u'entry'] = sp_list[1]
+    entry_dic[u'entry_pos'] = entry_pos.decode('utf-8')
+    entry_dic[u'ex_sent'] = sp_list[2]
+    entry_dic[u'out_list'] = out_list
+    entry_dic[u'pos_in_ex'] = pos_in_ex
+    entry_dic[u'entry_h'] = entry_hiragana
+    
                 
-                if not re.findall(r"<格解析結果:.*?>",sentence) == []:
-                    
+    return entry_dic
 
-                    analysis_result = re.findall(r"<格解析結果:.*?>",sentence)
+def overlap_key(entry_dic,prev_key,i):
+    """
+    概要：見出し語をキーにして登録しようとすると，見出し語の重複のためにキーの区別ができなくなる．そこで，見出し語の末尾に数字をつけることで実現．
+    入力：entry_dic,prev_key(ひとつ前の見出し語),i(見出し語末尾につける数字)
+    出力：prev_key,i
 
-                    analysis_result = "".join(sentence)
-                    # <が邪魔なので切る
-                    a_r_list = analysis_result.split("<")
-'''
-    #-----------------------------------------------------------
-    # KNPの解析結果のうち、述語の、述語と格の関係のみを記述した行のみを正規表現で切り出し
+    見出し語が直前と同じ見出し語である限り，数字に＋１を続ける．見出し語が違う見出し語になったら数字を０に戻す．
+    """
 
-    if not re.findall(r"\+.*D",sentence) == []:
-        if not re.findall(r"<主節>",sentence) == []:
-            if not re.findall(r"<格解析結果:.*?>",sentence) == []:
-                    
+    if prev_key == entry_dic[u'entry']:
 
-                analysis_result = re.findall(r"<格解析結果:.*?>",sentence)
+        i = i + 1        
+        new_key = entry_dic[u'entry'] + str(i)
+        overlap_dic.setdefault(new_key,entry_dic)
 
-                analysis_result = "".join(sentence)
-                # <が邪魔なので切る
-                a_r_list = analysis_result.split("<")
+    else:
+        i = 0
+        new_key = entry_dic[u'entry'] + str(i)
+        overlap_dic.setdefault(new_key,entry_dic)
+        
+    if frag == 1:
+        for e_key in overlap_dic:
+            print 'overlap_dic key:',e_key
 
-
-            
-    #-----------------------------------------------------------
-    # 切り出された行から、さらに述語と格関係のみの箇所を切り出す
-    for i in range(len(a_r_list)):
-        tmp = a_r_list[i]
-        tmp = tmp.strip(">")
-        if not re.findall("格解析結果:.*",tmp) == []:
-            print_list = []
-            a_r = a_r_list[i]
-            
-            case_relation_list = a_r.split(":")
-            predicate = case_relation_list[1]
-            print_list.append(predicate)
-            print_list.append(" ")
-            
-            case = case_relation_list[3]
-            each_case_list = case.split(";")
-
-            for ii in range(len(each_case_list)):
-                each_case = each_case_list[ii]
-                list = each_case.split("/")
-
-                case = list[0]
-                word_to_case = list[2]
-
-               
-                if not word_to_case == "-":
-
-                    category,domain = juman(word_to_case)
-                    format = case+" "+word_to_case+" "+category+" "+domain
-                    print_list.append(format)
-
-    return print_list
-
-def clause_count(tmp_list):
-## 節の数と各節が何行文の情報を持っているのか調べる関数    
-
-    ## clause_numは節の数,リストclauseは各節が何行の情報を持っているか。
-    clause_num = 0
-    clause = []
-    c_num = -1
-
-    #print "-----------------------------"
-
-    for tmp in tmp_list:
- 
-       
-        if tmp == "*":   
-            ## 前の節が何行分の情報を持っていたか。リストに追加する
-            clause.append(c_num)
-            
-            ## c_numの数を初期化
-            c_num = 1
-            
-            ## clause_numの数をひとつ増やす
-            clause_num += 1
-            
-        ## 処理の都合上、最後の節はカウントできないので、無理やりだけど、こうする 
-        elif tmp == "EOS\n":
-            
-            ## EOSの前には。、？！の記号しかないと仮定して-1する
-            c_num = c_num - 1
-            clause.append(c_num)
-
-        else:            
-            c_num += 1
-
-    clause.pop(0)
-    #print "Number of Clauses is",clause_num
-    #print "List of lines in each clause",clause
-
-    return clause_num,clause
+    prev_key = entry_dic[u'entry']
+    return prev_key,i
 
 
-def knp_tab(sentence):
-
-    tmp_list = []
-    clause_list = []
-
-    echo = subprocess.Popen(['echo',sentence],
-                            stdout=subprocess.PIPE,
-                            )
-
-
-    juman = subprocess.Popen(['/home/kensuke-mi/bin/juman'], 
-                             stdin=echo.stdout,
-                             stdout=subprocess.PIPE,
-                             )
-
-
-    knp = subprocess.Popen(['knp','-case','-tab'],
-                           stdin = juman.stdout,
-                           stdout=subprocess.PIPE,
-                           )
-
-
-    end_of_pipe_tab = knp.stdout
-
-    for line in end_of_pipe_tab:
-
-        #print line
-       
-        line_split = line.split(" ")
-        tmp_list.append(line_split[0])
-        clause_list.append(line)
-        format_list = Syori(line)
-        if not format_list == []:
-            return format_list
+def load_sentence():
     
-    #ここで各処理関数に情報を投げる
-    #clause_num, clause = clause_count(tmp_list)
-    #Syori(clause_list,clause_num,clause)
+    #prev_keyとkey_indexはdef overlap_keyの中で使用ために，ここで初期化
+    prev_key = ''
+    key_index = 0
+    if os.path.exists('./sentence-list'):
+        sent_list = open('./sentence-list','r').readlines()
+        for sent_i,sent in enumerate(sent_list):
+            entry_dic = make_entry_dic(sent)
+            entry_dic = decision_analysis(entry_dic)
+            prev_key,key_index = overlap_key(entry_dic,prev_key,key_index)
+            write_tsv(entry_dic)
+            #for developping test
+            if sent_i == 10:
+                #sys.exit()
+                break
+    else:
+        sys.exit()
+
+    pickle_dump(overlap_dic)
+
+def write_tsv(entry_dic):
+    """
+    概要：tsvファイルにして書き出す
+    """
+    write_f = open('cat_dom_plus.tsv','w')
     
+    head = (u'ID'+u'\t'+u'見出し語'+u'\t'+u'見出し語（ひらがな)'+u'\t'+u'見出し語品詞'+u'\t'+u'例文'+u'\t'+u'例文中の品詞'+u'\t'+u'|'+u'述語'+u'\t'+u'格'+u'\t'+u'項'+u'\t'+u'項１：ドメイン'+u'\t'+u'項１：カテゴリ'+u'|'+u'\n').encode('utf-8') 
+    write_f.write(head)
+    
+    #__xx__
+    if frag == 1:
+        print 'entry dic is:{0}'.format(entry_dic)
+        print '='*40
+        print 'ID',entry_dic[u'ID']
+        print '見出し語:',entry_dic[u'entry']
+        print '見出し語（ひらがな）：',entry_dic[u'entry_h']
+        print '見出し語の品詞：',entry_dic[u'entry_pos']
+        print '例文：',entry_dic[u'ex_sent']
+        print '例文中の品詞：',entry_dic[u'pos_in_ex']
+        if isinstance(entry_dic[u'p_a'],dict):
+            print '述語：',entry_dic[u'p_a'][u'predicate']
+            for key in entry_dic[u'p_a'][u'argument']:
+                print '格：',key
+                if isinstance(entry_dic[u'p_a'][u'argument'][key],dict):
+                    print 'カテゴリー：',entry_dic[u'p_a'][u'argument'][key][u'cat']
+                    print 'ドメイン：',entry_dic[u'p_a'][u'argument'][key][u'dom']
+                    print '項：',entry_dic[u'p_a'][u'argument'][key][u'arg']
+
+        if isinstance(entry_dic[u'modi'],list):
+            for e_element in entry_dic[u'modi']:
+                print '意味ドメイン（修飾）',e_element[u'dom']
+                print '意味カテゴリ（修飾）',e_element[u'cat']
+                  
+            
+
+
+                         
+    write_f.close()
+
+def pickle_dump(overlap_dic):
+    pic_f = open('overlap_dic.pickle','w')
+    pickle.dump(overlap_dic,pic_f)
+
+    pic_f.close()
 
 if __name__ == '__main__':
+    load_sentence()
 
-    output_f = open('out-list','w')
-    input_f = open("sentence-list",'r')
-    sentence_list = input_f.readlines()
-    for sentence in sentence_list:
-        sen_list = []
-        
-        sentence_l = sentence.split('\t')
-        sentence = sentence_l[2]
-        sentence = sentence.strip('\n')
-        for sen in sentence:
-            if not sen == " ":
-                sen_list.append(sen)
-
-            else:
-                pass
-        sentence = "".join(sen_list)
-
-        format = knp_tab(sentence)
-        format = "".join(format)
-        
-        out_format = sentence_l[0] + "\t" + sentence_l[1] + "\t" +sentence + "\t" + str(format) + "\n"
-
-        print out_format
-        output_f.writelines(out_format)
     
-    output_f.close()
-
-

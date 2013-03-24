@@ -15,7 +15,7 @@ def sentence(struc_dic,p_a_dic,out_list,frag):
         print u'手話構文に関する情報'
 
     if struc_dic[u'force'] == u'yes':
-        sent = [(p_a_dic[u'ga']).reg_morp_form,(p_a_dic['ni']).reg_morp_form,u'pt3',p_a_dic['wo'].reg_morp_form,p_a_dic['pred'].reg_morp_form,u'jaw_up',p_a_dic['wo'].reg_morp_form,p_a_dic['pred'].reg_morp_form,u'pt3']
+        sent = [(p_a_dic[u'ga']).reg_morp_form,(p_a_dic['ni']).reg_morp_form,u'pt3',p_a_dic['wo'].reg_morp_form,p_a_dic['pred'].reg_morp_form,u'jaw_up',u'わかる',p_a_dic['wo'].reg_morp_form,p_a_dic['pred'].reg_morp_form,u'pt3']
 
     if struc_dic[u'passive'] == u'yes':
         sent = [p_a_dic['ga'].reg_morp_form,p_a_dic['ni'].reg_morp_form,p_a_dic['pred'].reg_morp_form,u'pt3']
