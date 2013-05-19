@@ -1,9 +1,0 @@
-#! /usr/bin/python
-# -*- coding:utf-8 -*-
-
-
-def heiretsu():
-    
-    for index in range(out_list):
-        if out_list[index]  == 0:
-            pass
