@@ -136,8 +136,8 @@ def knp_tab(sentence):
     clause_list = []
 
     sentence = conv_encoding(sentence)
-    sentence = check_kuten(sentence)
-
+    #sentence = unicode(sentence,'utf-8')
+    #sentence = check_kuten(sentence)
     #windowsでは以下のsubprocessはコメントオフ
 
     try:
